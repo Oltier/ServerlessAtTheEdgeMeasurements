@@ -27,6 +27,7 @@ def object_classification_run(input_payload):
             time.sleep(1)
             processing_end_time = timeit.default_timer()
             message = {
+                'message_sent': input_payload['message_sent'],
                 'processing_start_time': processing_start_time,
                 'processing_end_time': processing_end_time,
                 'prediction': str(predictions)

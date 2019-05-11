@@ -27,36 +27,26 @@ from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCor
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.exception.AWSIoTExceptions import DiscoveryInvalidRequestException
 
-AllowedActions = ['both', 'publish', 'subscribe']
-
 
 # General message notification callback
 def customOnMessage(message):
-    print('Received message at %s on topic %s: %s\n' % (str(timeit.default_timer()), message.topic, message.payload))
+    message_arrived = timeit.default_timer()
+    payload = json.loads(message.payload)
+    del payload['prediction']
+    payload['message_arrived'] = message_arrived
+    print(payload)
+    print "Diff between message_sent and message_arrived: {}".format(message_arrived - payload['message_sent'])
 
 
 MAX_DISCOVERY_RETRIES = 10
 GROUP_CA_PATH = "./groupCA/"
-
-# # Read in command-line parameters
-# parser = argparse.ArgumentParser()
-# parser.add_argument("-e", "--endpoint", action="store", required=True, dest="host", help="Your AWS IoT custom endpoint")
-# parser.add_argument("-r", "--rootCA", action="store", required=True, dest="rootCAPath", help="Root CA file path")
-# parser.add_argument("-c", "--cert", action="store", dest="certificatePath", help="Certificate file path")
-# parser.add_argument("-k", "--key", action="store", dest="privateKeyPath", help="Private key file path")
-# parser.add_argument("-n", "--thingName", action="store", dest="thingName", default="Bot", help="Targeted thing name")
-# parser.add_argument("-t", "--topic", action="store", dest="topic", default="sdk/test/Python", help="Targeted topic")
-# parser.add_argument("-m", "--mode", action="store", dest="mode", default="both",
-#                     help="Operation modes: %s"%str(AllowedActions))
-# parser.add_argument("-M", "--message", action="store", dest="message", default="Hello World!",
-#                     help="Message to publish")
 
 endpoint = open('secrets/endpoint', 'r')
 host = endpoint.readline()
 rootCAPath = 'secrets/root-ca-cert.pem'
 certificatePath = 'secrets/30e01d241d.cert.pem'
 privateKeyPath = 'secrets/30e01d241d.private.key'
-thingName = 'TestCamera'
+thingName = 'MeasurementSensor'
 clientId = thingName
 thingName = thingName
 response_topic = 'object_classification/response'
@@ -156,9 +146,8 @@ while True:
     fd = open('test.jpg')
     img_str = fd.read()
     b64 = base64.b64encode(img_str)
-    message = {'message': b64}
+    message = {'message': b64, 'message_sent': timeit.default_timer()}
     messageJson = json.dumps(message)
-    print("Message sent: ", timeit.default_timer())
     myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
-    print('Published topic %s: %s\n' % (request_topic, messageJson))
+    print('Published to topic %s\n' % request_topic)
     time.sleep(10)
