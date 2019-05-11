@@ -20,6 +20,8 @@ import time
 import uuid
 import json
 import logging
+import base64
+import timeit
 from AWSIoTPythonSDK.core.greengrass.discovery.providers import DiscoveryInfoProvider
 from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCore
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
@@ -30,7 +32,7 @@ AllowedActions = ['both', 'publish', 'subscribe']
 
 # General message notification callback
 def customOnMessage(message):
-    print('Received message on topic %s: %s\n' % (message.topic, message.payload))
+    print('Received message at %s on topic %s: %s\n' % (str(timeit.default_timer()), message.topic, message.payload))
 
 
 MAX_DISCOVERY_RETRIES = 10
@@ -57,7 +59,8 @@ privateKeyPath = 'secrets/30e01d241d.private.key'
 thingName = 'TestCamera'
 clientId = thingName
 thingName = thingName
-topic = 'object_classification/response'
+response_topic = 'object_classification/response'
+request_topic = 'object_classification/request'
 
 # Configure logging
 logger = logging.getLogger("AWSIoTPythonSDK.core")
@@ -146,19 +149,16 @@ if not connected:
     sys.exit(-2)
 
 # Successfully connected to the core
-if args.mode == 'both' or args.mode == 'subscribe':
-    myAWSIoTMQTTClient.subscribe(topic, 0, None)
+myAWSIoTMQTTClient.subscribe(response_topic, 0, None)
 time.sleep(2)
 
-loopCount = 0
 while True:
-    if args.mode == 'both' or args.mode == 'publish':
-        message = {}
-        message['message'] = args.message
-        message['sequence'] = loopCount
-        messageJson = json.dumps(message)
-        myAWSIoTMQTTClient.publish(topic, messageJson, 0)
-        if args.mode == 'publish':
-            print('Published topic %s: %s\n' % (topic, messageJson))
-        loopCount += 1
-    time.sleep(1)
+    fd = open('test.jpg')
+    img_str = fd.read()
+    b64 = base64.b64encode(img_str)
+    message = {'message': b64}
+    messageJson = json.dumps(message)
+    print("Message sent: ", timeit.default_timer())
+    myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
+    print('Published topic %s: %s\n' % (request_topic, messageJson))
+    time.sleep(10)
