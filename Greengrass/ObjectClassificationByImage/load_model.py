@@ -21,23 +21,31 @@ class Model(object):
     def predict_from_image(self, img_str):
         reshape = (224, 224)
 
-        nparr = np.fromstring(img_str, np.uint8)
+        nparr = np.frombuffer(img_str, np.uint8)
         image = cv2.imdecode(nparr, cv2.CV_LOAD_IMAGE_COLOR)
 
+        N = 5
+        topN = []
+
+        # Switch RGB to BGR format (which ImageNet networks take)
         img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
         if img is None:
-            return 'unknown'
+            return topN
 
+        # Resize image to fit network input
         img = cv2.resize(img, reshape)
         img = np.swapaxes(img, 0, 2)
         img = np.swapaxes(img, 1, 2)
         img = img[np.newaxis, :]
 
+        # Run forward on the image
         self.module.forward(Batch([mx.nd.array(img)]))
         prob = self.module.get_outputs()[0].asnumpy()
         prob = np.squeeze(prob)
 
+        # Extract the top N predictions from the softmax output
         a = np.argsort(prob)[::-1]
-        return prob[0], self.synsets[0]
+        for i in a[0:N]:
+            topN.append((prob[i], self.synsets[i]))
+        return topN
 
