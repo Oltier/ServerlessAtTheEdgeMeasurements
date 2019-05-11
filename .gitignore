@@ -122,3 +122,5 @@ pip-selfcheck.json
 .idea
 
 /ServerlessAtTheEdgeMeasurements.iml
+/Greengrass/Device/secrets/
+/Greengrass/Device/groupCA/
