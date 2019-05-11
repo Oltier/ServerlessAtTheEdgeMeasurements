@@ -19,14 +19,12 @@ class Model(object):
         self.module.set_params(arg_params, aux_params)
 
     def predict_from_image(self, image):
-        n = 5
         reshape = (224, 224)
-        topN = []
 
         img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         if img is None:
-            return topN
+            return 'unkown'
 
         img = cv2.resize(img, reshape)
         img = np.swapaxes(img, 0, 2)
@@ -38,7 +36,5 @@ class Model(object):
         prob = np.squeeze(prob)
 
         a = np.argsort(prob)[::-1]
-        for i in a[0:n]:
-            topN.append((prob[i], self.synsets[i]))
-        return topN
+        return prob[0], self.synsets[0]
 
