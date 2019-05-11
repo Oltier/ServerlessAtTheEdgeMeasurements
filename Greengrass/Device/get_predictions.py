@@ -27,14 +27,19 @@ from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCor
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.exception.AWSIoTExceptions import DiscoveryInvalidRequestException
 
+stats = open('stats.json', 'a+')
+
 
 # General message notification callback
 def customOnMessage(message):
     message_arrived = timeit.default_timer()
     payload = json.loads(message.payload)
     del payload['prediction']
+    diff = message_arrived - payload['message_sent']
+    payload['diff'] = diff
     payload['message_arrived'] = message_arrived
     print(payload)
+    stats.write("{},\n".format(json.dumps(payload)))
     print "Diff between message_sent and message_arrived: {}".format(message_arrived - payload['message_sent'])
 
 
@@ -142,12 +147,16 @@ if not connected:
 myAWSIoTMQTTClient.subscribe(response_topic, 0, None)
 time.sleep(2)
 
-while True:
-    fd = open('test.jpg')
-    img_str = fd.read()
-    b64 = base64.b64encode(img_str)
-    message = {'message': b64, 'message_sent': timeit.default_timer()}
-    messageJson = json.dumps(message)
-    myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
-    print('Published to topic %s\n' % request_topic)
-    time.sleep(10)
+try:
+    while True:
+        fd = open('test.jpg')
+        img_str = fd.read()
+        b64 = base64.b64encode(img_str)
+        message = {'message': b64, 'message_sent': timeit.default_timer()}
+        messageJson = json.dumps(message)
+        myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
+        print('Published to topic %s\n' % request_topic)
+        time.sleep(3)
+except KeyboardInterrupt:
+    stats.close()
+    exit(0)
