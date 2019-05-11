@@ -1,0 +1,4 @@
+greengrasssdk
+numpy
+mxnet
+opencv-python
