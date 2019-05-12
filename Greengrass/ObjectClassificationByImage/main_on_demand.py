@@ -24,7 +24,6 @@ def object_classification_run(input_payload):
             original_message = input_payload['message']
             image_string = base64.b64decode(original_message)
             predictions = model.predict_from_image(image_string)
-            time.sleep(1)
             processing_end_time = timeit.default_timer()
             message = {
                 'message_sent': input_payload['message_sent'],

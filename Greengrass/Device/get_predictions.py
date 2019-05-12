@@ -27,7 +27,7 @@ from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCor
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.exception.AWSIoTExceptions import DiscoveryInvalidRequestException
 
-stats = open('stats_asd.json', 'a+')
+stats = open('stats.json', 'a+')
 
 
 # General message notification callback
@@ -159,7 +159,7 @@ try:
         messageJson = json.dumps(message)
         myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
         print('Request {} Published to topic {}\n'.format(i, request_topic))
-        time.sleep(3)
+        time.sleep(1)
 except KeyboardInterrupt:
     stats.close()
     exit(0)
