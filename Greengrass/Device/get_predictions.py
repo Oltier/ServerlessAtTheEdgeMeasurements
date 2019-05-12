@@ -27,7 +27,7 @@ from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCor
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.exception.AWSIoTExceptions import DiscoveryInvalidRequestException
 
-stats = open('stats.json', 'a+')
+stats = open('stats_asd.json', 'a+')
 
 
 # General message notification callback
@@ -147,15 +147,18 @@ if not connected:
 myAWSIoTMQTTClient.subscribe(response_topic, 0, None)
 time.sleep(2)
 
+i = 0
+
 try:
-    while True:
+    while True and i < 500:
+        i += 1
         fd = open('test.jpg')
         img_str = fd.read()
         b64 = base64.b64encode(img_str)
         message = {'message': b64, 'message_sent': timeit.default_timer()}
         messageJson = json.dumps(message)
         myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
-        print('Published to topic %s\n' % request_topic)
+        print('Request {} Published to topic {}\n'.format(i, request_topic))
         time.sleep(3)
 except KeyboardInterrupt:
     stats.close()
