@@ -27,7 +27,7 @@ from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCor
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.exception.AWSIoTExceptions import DiscoveryInvalidRequestException
 
-stats = open('stats.json', 'a+')
+stats = open('stats_longlive.json', 'a+')
 
 
 # General message notification callback
@@ -163,3 +163,11 @@ try:
 except KeyboardInterrupt:
     stats.close()
     exit(0)
+
+while True:
+    try:
+        print('Waiting for response')
+        time.sleep(10)
+    except KeyboardInterrupt:
+        stats.close()
+        exit(0)
