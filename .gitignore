@@ -124,3 +124,6 @@ pip-selfcheck.json
 /ServerlessAtTheEdgeMeasurements.iml
 /Greengrass/Device/secrets/
 /Greengrass/Device/groupCA/
+
+/Azure/Device/certs
+/Azure/Device/azure-iot-sdk-python/device/samples/azure-iot-test-only.root.ca.cert.pem
