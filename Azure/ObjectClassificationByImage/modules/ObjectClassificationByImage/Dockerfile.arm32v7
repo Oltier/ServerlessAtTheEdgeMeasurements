@@ -3,15 +3,31 @@ FROM resin/raspberrypi3-debian:stretch
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libboost-python1.62.0 python3-pip libpython3-dev && \
-    rm -rf /var/lib/apt/lists/* 
+    apt-get install -y --no-install-recommends libboost-python1.62.0 python3-pip libpython3-dev zip unzip python-setuptools
 
 RUN pip3 install --upgrade pip 
 RUN pip install --upgrade setuptools 
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
+
+RUN apt-get install -y libopenblas-dev liblapack-dev python-opencv
 
 COPY . .
+
+RUN pip install wheel && \
+    tar xzf mxnet-python.tar.gz || (echo "Unable to untar mxnet python module. Exiting..." && exit) && \
+    mv python/dist/mxnet-0.11.0-py2.7.egg mxnet.zip && \
+    unzip -q mxnet.zip|| (echo "Unable to unzip mxnet dist. Exiting..." && exit) && \
+    rm -f mxnet.zip && \
+    ln -sf `pwd`/mxnet/libmxnet.so python/mxnet/libmxnet.so &&\
+    cd python && \
+    python setup.py install || (echo "Unable to install MXNET! Stopping verification..." && exit) && \
+    cd ../ && \
+    rm -rf tmp/ && \
+    rm -rf tests/ && \
+    rm -rf python/ && \
+    rm -rf EGG-INFO/ 
+
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
 
 RUN useradd -ms /bin/bash moduleuser
 USER moduleuser
