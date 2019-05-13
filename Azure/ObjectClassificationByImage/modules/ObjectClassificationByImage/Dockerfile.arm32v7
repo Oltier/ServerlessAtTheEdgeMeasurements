@@ -16,4 +16,4 @@ COPY . .
 RUN useradd -ms /bin/bash moduleuser
 USER moduleuser
 
-ENTRYPOINT [ "python3", "-u", "./main.py" ]
+ENTRYPOINT [ "python3", "-u", "./main_on_demand.py" ]
