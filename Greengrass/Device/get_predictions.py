@@ -27,12 +27,14 @@ from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCor
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.exception.AWSIoTExceptions import DiscoveryInvalidRequestException
 
-stats = open('stats_longlive.json', 'a+')
+stats = open('stats.json', 'a+')
 
 
 # General message notification callback
 def customOnMessage(message):
     message_arrived = timeit.default_timer()
+    size = sys.getsizeof(message)
+    print("Received size: {}".format(str(size)))
     payload = json.loads(message.payload)
     del payload['prediction']
     diff = message_arrived - payload['message_sent']
@@ -157,6 +159,8 @@ try:
         b64 = base64.b64encode(img_str)
         message = {'message': b64, 'message_sent': timeit.default_timer()}
         messageJson = json.dumps(message)
+        size = sys.getsizeof(message)
+        print("Sent size: {}".format(str(size)))
         myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
         print('Request {} Published to topic {}\n'.format(i, request_topic))
         time.sleep(1)
