@@ -42,7 +42,6 @@ PROTOCOL = IoTHubTransportProvider.MQTT
 # we forward this message to the "output1" queue.
 def receive_message_callback(message, hubManager):
     global RECEIVE_CALLBACKS
-    global TEMPERATURE_THRESHOLD
     message_buffer = message.get_bytearray()
     message_size = len(message_buffer)
     input_payload_json = message_buffer[:message_size].decode('utf-8')
@@ -50,7 +49,7 @@ def receive_message_callback(message, hubManager):
     response_payload = object_classification_run(input_payload)
     print(response_payload)
     # hub_manager.respond(response_payload)
-    return IoTHubMessageDispositionResult.REJECTED
+    return IoTHubMessageDispositionResult.ACCEPTED
 
 
 def object_classification_run(input_payload):
@@ -61,11 +60,12 @@ def object_classification_run(input_payload):
             image_string = base64.b64decode(original_message)
             predictions = model.predict_from_image(image_string)
             processing_end_time = timeit.default_timer()
+
             message = {
                 'message_sent': input_payload['message_sent'],
                 'processing_start_time': processing_start_time,
                 'processing_end_time': processing_end_time,
-                # 'prediction': str(predictions)
+                'prediction': str(predictions)
             }
             return json.dumps(message)
         except Exception as ex:
