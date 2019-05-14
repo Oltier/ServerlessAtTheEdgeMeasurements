@@ -11,7 +11,7 @@ from iothub_client import IoTHubMessage, IoTHubMessageDispositionResult, IoTHubE
 
 import load_model
 
-model_path = 'squeezenet/'
+model_path = './squeezenet/'
 model = load_model.Model(model_path + 'synset.txt', model_path + 'squeezenet_v1.1')
 
 MESSAGE_TIMEOUT = 10000
@@ -25,6 +25,7 @@ def receive_message_callback(message, hub_manager):
     input_payload_json = message_buffer[:message_size].decode('utf-8')
     input_payload = json.loads(input_payload_json)
     print(input_payload)
+    #eper
     # response_payload = object_classification_run(input_payload)
     # hub_manager.respond(response_payload)
     return IoTHubMessageDispositionResult.ACCEPTED
