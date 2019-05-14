@@ -50,7 +50,7 @@ def receive_message_callback(message, hubManager):
     response_payload = object_classification_run(input_payload)
     print(response_payload)
     # hub_manager.respond(response_payload)
-    return IoTHubMessageDispositionResult.ACCEPTED
+    return IoTHubMessageDispositionResult.REJECTED
 
 
 def object_classification_run(input_payload):
@@ -65,9 +65,8 @@ def object_classification_run(input_payload):
                 'message_sent': input_payload['message_sent'],
                 'processing_start_time': processing_start_time,
                 'processing_end_time': processing_end_time,
-                'prediction': str(predictions)
+                # 'prediction': str(predictions)
             }
-            print(message)
             return json.dumps(message)
         except Exception as ex:
             e = sys.exc_info()[0]
