@@ -8,26 +8,31 @@ RUN apt-get update && \
 RUN pip3 install --upgrade pip 
 RUN pip install --upgrade setuptools 
 
-RUN apt-get install -y libopenblas-dev liblapack-dev python-opencv
+RUN apt-get install -y libopenblas-dev liblapack-dev
+
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python-opencv
 
 COPY . .
 
+COPY ./mxnet-python.tar.gz .
+
 RUN pip install wheel && \
-    tar xzf mxnet-python.tar.gz || (echo "Unable to untar mxnet python module. Exiting..." && exit) && \
+    tar xzf mxnet-python.tar.gz && \
     mv python/dist/mxnet-0.11.0-py2.7.egg mxnet.zip && \
-    unzip -q mxnet.zip|| (echo "Unable to unzip mxnet dist. Exiting..." && exit) && \
+    unzip -q mxnet.zip && \
     rm -f mxnet.zip && \
     ln -sf `pwd`/mxnet/libmxnet.so python/mxnet/libmxnet.so &&\
     cd python && \
-    python setup.py install || (echo "Unable to install MXNET! Stopping verification..." && exit) && \
+    python setup.py install && \
     cd ../ && \
     rm -rf tmp/ && \
     rm -rf tests/ && \
     rm -rf python/ && \
     rm -rf EGG-INFO/ 
-
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
 
 RUN useradd -ms /bin/bash moduleuser
 USER moduleuser

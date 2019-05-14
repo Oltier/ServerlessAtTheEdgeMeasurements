@@ -16,7 +16,7 @@ model = load_model.Model(model_path + 'synset.txt', model_path + 'squeezenet_v1.
 
 MESSAGE_TIMEOUT = 10000
 OUTPUT_QUEUE_NAME = 'object_classification/response'
-INPUT_QUEUE_NAME = 'object_classification/input'
+INPUT_QUEUE_NAME = 'object_classification/request'
 
 
 def receive_message_callback(message, hub_manager):
@@ -24,8 +24,9 @@ def receive_message_callback(message, hub_manager):
     message_size = len(message_buffer)
     input_payload_json = message_buffer[:message_size].decode('utf-8')
     input_payload = json.loads(input_payload_json)
-    response_payload = object_classification_run(input_payload)
-    hub_manager.respond(response_payload)
+    print(input_payload)
+    # response_payload = object_classification_run(input_payload)
+    # hub_manager.respond(response_payload)
     return IoTHubMessageDispositionResult.ACCEPTED
 
 
@@ -43,6 +44,7 @@ def object_classification_run(input_payload):
                 'processing_end_time': processing_end_time,
                 'prediction': str(predictions)
             }
+            print(message)
             return json.dumps(message)
         except Exception as ex:
             e = sys.exc_info()[0]
@@ -67,8 +69,7 @@ class HubManager(object):
 
         # sets the callback when a message arrives on "input1" queue.  Messages sent to
         # other inputs or to the default will be silently discarded.
-        # self.client.set_message_callback("input1", receive_message_callback, self)
-        object_classification_run(self)
+        self.client.set_message_callback(INPUT_QUEUE_NAME, receive_message_callback, self)
 
     def respond(self, response_payload):
         self.client.send_event_async(OUTPUT_QUEUE_NAME, response_payload, None, None)
