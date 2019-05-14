@@ -47,7 +47,6 @@ def receive_message_callback(message, hubManager):
     message_size = len(message_buffer)
     input_payload_json = message_buffer[:message_size].decode('utf-8')
     input_payload = json.loads(input_payload_json)
-    print(input_payload)
     response_payload = object_classification_run(input_payload)
     print(response_payload)
     # hub_manager.respond(response_payload)
