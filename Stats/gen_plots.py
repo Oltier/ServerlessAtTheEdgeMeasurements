@@ -51,6 +51,7 @@ df_aws_stats['network_delay'] = df_aws_stats.apply(calc_network_delay_aws, axis=
 df_aws_stats['overall_delay'] = df_aws_stats.apply(calc_overall_delay, axis=1)
 
 k2_2, p_2 = stats.normaltest(df_aws_stats['overall_delay'])
+print("AWS overall delay normaltest p_2: {}".format(p_2))
 if p_2 < alpha:
     print("The null hypothesis can be rejected for aws, normal distribution")
 else:
@@ -65,7 +66,7 @@ print("AWS processing delay mean: {}".format(df_aws_stats['processing_delay'].me
 print("AWS processing delay std: {}".format(df_aws_stats['processing_delay'].std()))
 
 alpha_mw = 0.05
-stat, p_mw = mannwhitneyu(df_azure_stats['overall_delay'], df_aws_stats['overall_delay'])
+stat, p_mw = mannwhitneyu(df_azure_stats['overall_delay'], df_aws_stats['overall_delay'], alternative='two-sided')
 print("P_mw: {}".format(p_mw))
 if p_mw > alpha_mw:
     print('Same distribution (fail to reject H0)')
@@ -97,13 +98,13 @@ network_delay = pd.DataFrame({
     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure IoT Edge'] * 500))
 })
 
-fig, ax = plt.subplots(nrows=3, figsize=(10, 5))
+fig, ax = plt.subplots(nrows=3, figsize=(10, 20))
 fig.tight_layout()
 overall_delay_fig = sns.boxplot('platform', 'overall_delay', data=overall_delay, ax=ax[0])
-overall_delay_fig.set(title="Overall delay by platform", xlabel='Platform', ylabel='Overall delay (ms)')
+overall_delay_fig.set(title="Overall latency by platform", xlabel='Platform', ylabel='Overall latency (s)')
 processing_delay_fig = sns.boxplot('platform', 'processing_delay', data=processing_delay, ax=ax[1])
-processing_delay_fig.set(title="Processing delay by platform", xlabel='Platform', ylabel='Processing delay (ms)')
+processing_delay_fig.set(title="Processing latency by platform", xlabel='Platform', ylabel='Processing latency (s)')
 network_delay_fig = sns.boxplot('platform', 'network_delay', data=network_delay, ax=ax[2])
-network_delay_fig.set(title="Network delay by platform", xlabel='Platform', ylabel='Network delay (ms)')
+network_delay_fig.set(title="Network latency by platform", xlabel='Platform', ylabel='Network latency (s)')
 plt.savefig('plots.png')
 plt.show()
