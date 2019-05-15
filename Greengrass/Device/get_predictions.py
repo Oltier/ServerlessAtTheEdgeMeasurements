@@ -159,7 +159,7 @@ try:
         b64 = base64.b64encode(img_str)
         message = {'message': b64, 'message_sent': timeit.default_timer()}
         messageJson = json.dumps(message)
-        size = sys.getsizeof(message)
+        size = sys.getsizeof(messageJson)
         print("Sent size: {}".format(str(size)))
         myAWSIoTMQTTClient.publish(request_topic, messageJson, 0)
         print('Request {} Published to topic {}\n'.format(i, request_topic))
