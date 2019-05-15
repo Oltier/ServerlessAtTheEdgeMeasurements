@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
+from scipy.stats import mannwhitneyu, levene
 
 
 def calc_processing_delay(row):
@@ -28,15 +29,18 @@ df_azure_stats['processing_delay'] = df_azure_stats.apply(calc_processing_delay,
 df_azure_stats['network_delay'] = df_azure_stats.apply(calc_network_delay_azure, axis=1)
 df_azure_stats['overall_delay'] = df_azure_stats.apply(calc_overall_delay, axis=1)
 k2, p = stats.normaltest(df_azure_stats['overall_delay'])
-alpha = 1e-3
+alpha = 0.05
 
 print("Azure overall delay mean: {}".format(df_azure_stats['overall_delay'].mean()))
 print("Azure overall delay std: {}".format(df_azure_stats['overall_delay'].std()))
+print("Azure overall delay median: {}".format(df_azure_stats['overall_delay'].median()))
 print("Azure overall delay normaltest p: {}".format(p))
 if p < alpha:
-    print("The null hypothesis can be rejected")
+    print("The null hypothesis can be rejected for azure, normal distribution")
 else:
-    print("The null hypothesis cannot be rejected")
+    print("The null hypothesis cannot be rejected for azure, not normal distribution")
+
+
 print("Azure network delay mean: {}".format(df_azure_stats['network_delay'].mean()))
 print("Azure network delay std: {}".format(df_azure_stats['network_delay'].std()))
 print("Azure processing delay mean: {}".format(df_azure_stats['processing_delay'].mean()))
@@ -46,12 +50,37 @@ df_aws_stats['processing_delay'] = df_aws_stats.apply(calc_processing_delay, axi
 df_aws_stats['network_delay'] = df_aws_stats.apply(calc_network_delay_aws, axis=1)
 df_aws_stats['overall_delay'] = df_aws_stats.apply(calc_overall_delay, axis=1)
 
+k2_2, p_2 = stats.normaltest(df_aws_stats['overall_delay'])
+if p_2 < alpha:
+    print("The null hypothesis can be rejected for aws, normal distribution")
+else:
+    print("The null hypothesis cannot be rejected for aws, not normal distribution")
+
 print("AWS overall delay mean: {}".format(df_aws_stats['overall_delay'].mean()))
 print("AWS overall delay std: {}".format(df_aws_stats['overall_delay'].std()))
+print("AWS overall delay median: {}".format(df_aws_stats['overall_delay'].median()))
 print("AWS network delay mean: {}".format(df_aws_stats['network_delay'].mean()))
 print("AWS network delay std: {}".format(df_aws_stats['network_delay'].std()))
 print("AWS processing delay mean: {}".format(df_aws_stats['processing_delay'].mean()))
 print("AWS processing delay std: {}".format(df_aws_stats['processing_delay'].std()))
+
+alpha_mw = 0.05
+stat, p_mw = mannwhitneyu(df_azure_stats['overall_delay'], df_aws_stats['overall_delay'])
+print("P_mw: {}".format(p_mw))
+if p_mw > alpha_mw:
+    print('Same distribution (fail to reject H0)')
+else:
+    print('Different distribution (reject H0)')
+
+
+stats_levene, p_levene = levene(df_azure_stats['overall_delay'], df_aws_stats['overall_delay'])
+
+alpha_levene = 0.05
+print("P_levene: {}".format(p_levene))
+if p_levene > alpha_levene:
+    print('Accept H0, same variance')
+else:
+    print('Reject H0, different variance')
 
 overall_delay = pd.DataFrame({
     'overall_delay': np.concatenate((df_aws_stats['overall_delay'].values, df_azure_stats['overall_delay'].values)),
