@@ -27,9 +27,17 @@ df_azure_stats['processing_delay'] = df_azure_stats.apply(calc_processing_delay,
 df_azure_stats['network_delay'] = df_azure_stats.apply(calc_network_delay_azure, axis=1)
 df_azure_stats['overall_delay'] = df_azure_stats.apply(calc_overall_delay, axis=1)
 
+print("Azure overall delay mean: {}".format(df_azure_stats['overall_delay'].mean()))
+print("Azure network delay mean: {}".format(df_azure_stats['network_delay'].mean()))
+print("Azure processing delay mean: {}".format(df_azure_stats['processing_delay'].mean()))
+
 df_aws_stats['processing_delay'] = df_aws_stats.apply(calc_processing_delay, axis=1)
 df_aws_stats['network_delay'] = df_aws_stats.apply(calc_network_delay_aws, axis=1)
 df_aws_stats['overall_delay'] = df_aws_stats.apply(calc_overall_delay, axis=1)
+
+print("AWS overall delay mean: {}".format(df_aws_stats['overall_delay'].mean()))
+print("AWS network delay mean: {}".format(df_aws_stats['network_delay'].mean()))
+print("AWS processing delay mean: {}".format(df_aws_stats['processing_delay'].mean()))
 
 overall_delay = pd.DataFrame({
     'overall_delay': np.concatenate((df_aws_stats['overall_delay'].values, df_azure_stats['overall_delay'].values)),
@@ -46,7 +54,8 @@ network_delay = pd.DataFrame({
     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure IoT Edge'] * 500))
 })
 
-fig, ax = plt.subplots(nrows=3, figsize=(10, 20))
+fig, ax = plt.subplots(nrows=3, figsize=(10, 5))
+fig.tight_layout()
 overall_delay_fig = sns.boxplot('platform', 'overall_delay', data=overall_delay, ax=ax[0])
 overall_delay_fig.set(title="Overall delay by platform", xlabel='Platform', ylabel='Overall delay (ms)')
 processing_delay_fig = sns.boxplot('platform', 'processing_delay', data=processing_delay, ax=ax[1])
