@@ -7,7 +7,7 @@ import base64
 import load_model
 
 
-model_path = '/greengrass-machine-learning/mxnet/squeezenet/'
+model_path = './squeezenet/'
 model = load_model.Model(model_path + 'synset.txt', model_path + 'squeezenet_v1.1')
 
 
