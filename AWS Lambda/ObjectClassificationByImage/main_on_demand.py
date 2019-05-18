@@ -1,16 +1,10 @@
 import sys
 import timeit
 import traceback
-import greengrasssdk
 import json
-import time
 import base64
-import numpy as np
-import cv2
 
 import load_model
-
-client = greengrasssdk.client('iot-data')
 
 
 model_path = '/greengrass-machine-learning/mxnet/squeezenet/'
@@ -32,7 +26,7 @@ def object_classification_run(input_payload):
                 'prediction': str(predictions)
             }
             payload = json.dumps(message)
-            client.publish(topic='object_classification/response', payload=payload)
+            # TODO response
         except:
             e = sys.exc_info()[0]
             print("Exception occured during prediction: %s" % e)
