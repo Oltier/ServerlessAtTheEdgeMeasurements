@@ -1,9 +1,0 @@
-scipy
-pandas
-seaborn
-matplotlib
-AWSIoTPythonSDK
-greengrasssdk
-numpy
-mxnet
-opencv-python
