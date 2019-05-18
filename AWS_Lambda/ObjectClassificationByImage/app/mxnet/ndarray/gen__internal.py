@@ -3,13 +3,12 @@
 from ._internal import NDArrayBase
 from ..base import _Null
 
-def _CachedOp(*data, **kwargs):
+def _CachedOp(out=None, name=None, **kwargs):
     r"""
 
     Parameters
     ----------
-    data : NDArray[]
-        input data list
+
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -353,126 +352,6 @@ def _Lesser_Equal(lhs=None, rhs=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _LogicalAndScalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    data : NDArray
-        source input
-    scalar : float
-        scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _LogicalOrScalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    data : NDArray
-        source input
-    scalar : float
-        scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _LogicalXorScalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    data : NDArray
-        source input
-    scalar : float
-        scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _Logical_And(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _Logical_Or(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _Logical_Xor(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _Maximum(lhs=None, rhs=None, out=None, name=None, **kwargs):
     r"""
 
@@ -560,10 +439,6 @@ def _Minus(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_sub(row_sparse, row_sparse) = row_sparse
        - elemwise_sub(csr, csr) = csr
-       - elemwise_sub(default, csr) = default
-       - elemwise_sub(csr, default) = default
-       - elemwise_sub(default, rsp) = default
-       - elemwise_sub(rsp, default) = default
        - otherwise, ``elemwise_sub`` generates output with default storage
 
 
@@ -652,8 +527,8 @@ def _Mul(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_mul(default, default) = default
        - elemwise_mul(row_sparse, row_sparse) = row_sparse
-       - elemwise_mul(default, row_sparse) = row_sparse
-       - elemwise_mul(row_sparse, default) = row_sparse
+       - elemwise_mul(default, row_sparse) = default
+       - elemwise_mul(row_sparse, default) = default
        - elemwise_mul(csr, csr) = csr
        - otherwise, ``elemwise_mul`` generates output with default storage
 
@@ -810,10 +685,6 @@ def _Plus(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_add(row_sparse, row_sparse) = row_sparse
        - elemwise_add(csr, csr) = csr
-       - elemwise_add(default, csr) = default
-       - elemwise_add(csr, default) = default
-       - elemwise_add(default, rsp) = default
-       - elemwise_add(rsp, default) = default
        - otherwise, ``elemwise_add`` generates output with default storage
 
 
@@ -982,10 +853,6 @@ def _add(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_add(row_sparse, row_sparse) = row_sparse
        - elemwise_add(csr, csr) = csr
-       - elemwise_add(default, csr) = default
-       - elemwise_add(csr, default) = default
-       - elemwise_add(default, rsp) = default
-       - elemwise_add(rsp, default) = default
        - otherwise, ``elemwise_add`` generates output with default storage
 
 
@@ -1007,7 +874,7 @@ def _add(lhs=None, rhs=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _arange(start=_Null, stop=_Null, step=_Null, repeat=_Null, infer_range=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+def _arange(start=_Null, stop=_Null, step=_Null, repeat=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
     r"""Return evenly spaced values within a given interval. Similar to Numpy
 
     Parameters
@@ -1020,8 +887,6 @@ def _arange(start=_Null, stop=_Null, step=_Null, repeat=_Null, infer_range=_Null
         Spacing between values.
     repeat : int, optional, default='1'
         The repeating time of all elements. E.g repeat=3, the element a will be repeated three times --> a, a, a.
-    infer_range : boolean, optional, default=0
-        When set to True, infer the stop position from the start, step, repeat, and output tensor size.
     ctx : string, optional, default=''
         Context of output, in format [cpu|gpu|cpu_pinned](n).Only used for imperative calls.
     dtype : {'float16', 'float32', 'float64', 'int32', 'int64', 'int8', 'uint8'},optional, default='float32'
@@ -1513,23 +1378,6 @@ def _backward_RNN(out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _backward_ROIAlign(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _backward_ROIPooling(out=None, name=None, **kwargs):
     r"""
 
@@ -1802,6 +1650,23 @@ def _backward__Native(out=None, name=None, **kwargs):
     """
     return (0,)
 
+def _backward__contrib_CTCLoss(out=None, name=None, **kwargs):
+    r"""
+
+    Parameters
+    ----------
+
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
 def _backward__contrib_DeformableConvolution(out=None, name=None, **kwargs):
     r"""
 
@@ -1922,23 +1787,6 @@ def _backward__contrib_PSROIPooling(out=None, name=None, **kwargs):
     return (0,)
 
 def _backward__contrib_Proposal(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _backward__contrib_SyncBatchNorm(out=None, name=None, **kwargs):
     r"""
 
     Parameters
@@ -2387,23 +2235,6 @@ def _backward_clip(out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _backward_cond(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _backward_contrib_AdaptiveAvgPooling2D(out=None, name=None, **kwargs):
     r"""
 
@@ -2460,24 +2291,6 @@ def _backward_contrib_bipartite_matching(is_ascend=_Null, threshold=_Null, topk=
     """
     return (0,)
 
-def _backward_contrib_boolean_mask(axis=_Null, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    axis : int, optional, default='0'
-        An integer that represents the axis in NDArray to mask from.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _backward_contrib_box_iou(format=_Null, out=None, name=None, **kwargs):
     r"""
 
@@ -2497,15 +2310,13 @@ def _backward_contrib_box_iou(format=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _backward_contrib_box_nms(overlap_thresh=_Null, valid_thresh=_Null, topk=_Null, coord_start=_Null, score_index=_Null, id_index=_Null, force_suppress=_Null, in_format=_Null, out_format=_Null, out=None, name=None, **kwargs):
+def _backward_contrib_box_nms(overlap_thresh=_Null, topk=_Null, coord_start=_Null, score_index=_Null, id_index=_Null, force_suppress=_Null, in_format=_Null, out_format=_Null, out=None, name=None, **kwargs):
     r"""
 
     Parameters
     ----------
     overlap_thresh : float, optional, default=0.5
         Overlapping(IoU) threshold to suppress object with smaller score.
-    valid_thresh : float, optional, default=0
-        Filter input boxes to those whose scores greater than valid_thresh.
     topk : int, optional, default='-1'
         Apply nms to topk boxes with descending scores, -1 to no restriction.
     coord_start : int, optional, default='2'
@@ -2590,23 +2401,6 @@ def _backward_cosh(lhs=None, rhs=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _backward_ctc_loss(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _backward_degrees(lhs=None, rhs=None, out=None, name=None, **kwargs):
     r"""
 
@@ -2616,23 +2410,6 @@ def _backward_degrees(lhs=None, rhs=None, out=None, name=None, **kwargs):
         first input
     rhs : NDArray
         second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _backward_diag(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2681,7 +2458,7 @@ def _backward_div_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs)
     """
     return (0,)
 
-def _backward_dot(transpose_a=_Null, transpose_b=_Null, forward_stype=_Null, out=None, name=None, **kwargs):
+def _backward_dot(transpose_a=_Null, transpose_b=_Null, out=None, name=None, **kwargs):
     r"""
 
     Parameters
@@ -2690,28 +2467,6 @@ def _backward_dot(transpose_a=_Null, transpose_b=_Null, forward_stype=_Null, out
         If true then transpose the first input before dot.
     transpose_b : boolean, optional, default=0
         If true then transpose the second input before dot.
-    forward_stype : {None, 'csr', 'default', 'row_sparse'},optional, default='None'
-        The desired storage type of the forward output given by user, if thecombination of input storage types and this hint does not matchany implemented ones, the dot operator will perform fallback operationand still produce an output of the desired storage type.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _backward_erf(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2732,23 +2487,6 @@ def _backward_expm1(lhs=None, rhs=None, out=None, name=None, **kwargs):
         first input
     rhs : NDArray
         second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _backward_foreach(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2842,23 +2580,6 @@ def _backward_gather_nd(data=None, indices=None, shape=_Null, out=None, name=Non
         indices
     shape : Shape(tuple), required
         Shape of output.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _backward_hard_sigmoid(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -3964,26 +3685,6 @@ def _backward_softmax_cross_entropy(out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _backward_softmin(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _backward_softsign(lhs=None, rhs=None, out=None, name=None, **kwargs):
     r"""
 
@@ -4254,23 +3955,6 @@ def _backward_where(out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _backward_while_loop(out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _broadcast_backward(out=None, name=None, **kwargs):
     r"""
 
@@ -4288,44 +3972,10 @@ def _broadcast_backward(out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _cond(*data, **kwargs):
-    r"""Run a if-then-else using user-defined condition and computation
-
-    From:src/operator/control_flow.cc:1379
-
-    Parameters
-    ----------
-    cond : Symbol
-        Input graph for the condition.
-    then_branch : Symbol
-        Input graph for the then branch.
-    else_branch : Symbol
-        Input graph for the else branch.
-    data : NDArray[]
-        The input arrays that include data arrays and states.
-    num_outputs : int, required
-        The number of outputs of the subgraph.
-    cond_input_locs : tuple of <>, required
-        The locations of cond's inputs in the given inputs.
-    then_input_locs : tuple of <>, required
-        The locations of then's inputs in the given inputs.
-    else_input_locs : tuple of <>, required
-        The locations of else's inputs in the given inputs.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _copy(data=None, out=None, name=None, **kwargs):
     r"""Returns a copy of the input.
 
-    From:src/operator/tensor/elemwise_unary_op_basic.cc:200
+    From:src/operator/tensor/elemwise_unary_op_basic.cc:176
 
     Parameters
     ----------
@@ -4369,7 +4019,7 @@ def _crop_assign(lhs=None, rhs=None, begin=_Null, end=_Null, step=_Null, out=Non
     - lhs and rhs are of the same data type, and on the same device.
 
 
-    From:src/operator/tensor/matrix_op.cc:440
+    From:src/operator/tensor/matrix_op.cc:438
 
     Parameters
     ----------
@@ -4402,13 +4052,13 @@ def _crop_assign_scalar(data=None, scalar=_Null, begin=_Null, end=_Null, step=_N
     - output should be explicitly given and be the same as input
     )
 
-    From:src/operator/tensor/matrix_op.cc:465
+    From:src/operator/tensor/matrix_op.cc:463
 
     Parameters
     ----------
     data : NDArray
         Source input
-    scalar : double, optional, default=0
+    scalar : float, optional, default=0
         The scalar value for assignment.
     begin : Shape(tuple), required
         starting indices for the slice operation, supports negative indices.
@@ -4651,38 +4301,6 @@ def _eye(N=_Null, M=_Null, k=_Null, ctx=_Null, dtype=_Null, out=None, name=None,
     """
     return (0,)
 
-def _foreach(*data, **kwargs):
-    r"""Run a for loop over an NDArray with user-defined computation
-
-    From:src/operator/control_flow.cc:1256
-
-    Parameters
-    ----------
-    fn : Symbol
-        Input graph.
-    data : NDArray[]
-        The input arrays that include data arrays and states.
-    num_outputs : int, required
-        The number of outputs of the subgraph.
-    num_out_data : int, required
-        The number of output data of the subgraph.
-    in_state_locs : tuple of <>, required
-        The locations of loop states among the inputs.
-    in_data_locs : tuple of <>, required
-        The locations of input data among the inputs.
-    remain_locs : tuple of <>, required
-        The locations of remaining data among the inputs.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _full(shape=_Null, ctx=_Null, dtype=_Null, value=_Null, out=None, name=None, **kwargs):
     r"""fill target with a scalar value
 
@@ -4796,42 +4414,6 @@ def _greater_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
         source input
     scalar : float
         scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _histogram(data=None, bins=None, bin_cnt=_Null, range=_Null, out=None, name=None, **kwargs):
-    r"""This operators implements the histogram function.
-
-    Example::
-      x = [[0, 1], [2, 2], [3, 4]]
-      histo, bin_edges = histogram(data=x, bin_bounds=[], bin_cnt=5, range=(0,5))
-      histo = [1, 1, 2, 1, 1]
-      bin_edges = [0., 1., 2., 3., 4.]
-      histo, bin_edges = histogram(data=x, bin_bounds=[0., 2.1, 3.])
-      histo = [4, 1]
-
-
-
-    Defined in src/operator/tensor/histogram.cc:L136
-
-    Parameters
-    ----------
-    data : NDArray
-        Input ndarray
-    bins : NDArray
-        Input ndarray
-    bin_cnt : int or None, optional, default='None'
-        Number of bins for uniform case
-    range : , optional, default=None
-        The lower and upper range of the bins. if not provided, range is simply (a.min(), a.max()). values outside the range are ignored. the first element of the range must be less than or equal to the second. range affects the automatic bin computation as well. while bin width is computed to be optimal based on the actual data within range, the bin count will fill the entire range including portions containing no data.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -5019,126 +4601,6 @@ def _lesser_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _logical_and(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _logical_and_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    data : NDArray
-        source input
-    scalar : float
-        scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _logical_or(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _logical_or_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    data : NDArray
-        source input
-    scalar : float
-        scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _logical_xor(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    lhs : NDArray
-        first input
-    rhs : NDArray
-        second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _logical_xor_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    data : NDArray
-        source input
-    scalar : float
-        scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _maximum(lhs=None, rhs=None, out=None, name=None, **kwargs):
     r"""
 
@@ -5226,10 +4688,6 @@ def _minus(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_sub(row_sparse, row_sparse) = row_sparse
        - elemwise_sub(csr, csr) = csr
-       - elemwise_sub(default, csr) = default
-       - elemwise_sub(csr, default) = default
-       - elemwise_sub(default, rsp) = default
-       - elemwise_sub(rsp, default) = default
        - otherwise, ``elemwise_sub`` generates output with default storage
 
 
@@ -5318,8 +4776,8 @@ def _mul(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_mul(default, default) = default
        - elemwise_mul(row_sparse, row_sparse) = row_sparse
-       - elemwise_mul(default, row_sparse) = row_sparse
-       - elemwise_mul(row_sparse, default) = row_sparse
+       - elemwise_mul(default, row_sparse) = default
+       - elemwise_mul(row_sparse, default) = default
        - elemwise_mul(csr, csr) = csr
        - otherwise, ``elemwise_mul`` generates output with default storage
 
@@ -5461,10 +4919,6 @@ def _plus(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_add(row_sparse, row_sparse) = row_sparse
        - elemwise_add(csr, csr) = csr
-       - elemwise_add(default, csr) = default
-       - elemwise_add(csr, default) = default
-       - elemwise_add(default, rsp) = default
-       - elemwise_add(rsp, default) = default
        - otherwise, ``elemwise_add`` generates output with default storage
 
 
@@ -5546,24 +5000,255 @@ def _power_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _ravel_multi_index(data=None, shape=_Null, out=None, name=None, **kwargs):
-    r"""Converts a batch of index arrays into an array of flat indices. The operator follows numpy conventions so a single multi index is given by a column of the input matrix. 
+def _random_exponential(lam=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+    r"""Draw random samples from an exponential distribution.
 
-    Examples::
-   
-       A = [[3,6,6],[4,5,1]]
-       ravel(A, shape=(7,6)) = [22,41,37]
+    Samples are distributed according to an exponential distribution parametrized by *lambda* (rate).
+
+    Example::
+
+       exponential(lam=4, shape=(2,2)) = [[ 0.0097189 ,  0.08999364],
+                                          [ 0.04146638,  0.31715935]]
 
 
-
-    Defined in src/operator/tensor/ravel.cc:L41
+    Defined in src/operator/random/sample_op.cc:L115
 
     Parameters
     ----------
-    data : NDArray
-        Batch of multi-indices
+    lam : float, optional, default=1
+        Lambda parameter (rate) of the exponential distribution.
     shape : Shape(tuple), optional, default=[]
-        Shape of the array into which the multi-indices apply.
+        Shape of the output.
+    ctx : string, optional, default=''
+        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
+    dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
+        DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
+def _random_gamma(alpha=_Null, beta=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+    r"""Draw random samples from a gamma distribution.
+
+    Samples are distributed according to a gamma distribution parametrized by *alpha* (shape) and *beta* (scale).
+
+    Example::
+
+       gamma(alpha=9, beta=0.5, shape=(2,2)) = [[ 7.10486984,  3.37695289],
+                                                [ 3.91697288,  3.65933681]]
+
+
+    Defined in src/operator/random/sample_op.cc:L100
+
+    Parameters
+    ----------
+    alpha : float, optional, default=1
+        Alpha parameter (shape) of the gamma distribution.
+    beta : float, optional, default=1
+        Beta parameter (scale) of the gamma distribution.
+    shape : Shape(tuple), optional, default=[]
+        Shape of the output.
+    ctx : string, optional, default=''
+        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
+    dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
+        DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
+def _random_generalized_negative_binomial(mu=_Null, alpha=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+    r"""Draw random samples from a generalized negative binomial distribution.
+
+    Samples are distributed according to a generalized negative binomial distribution parametrized by
+    *mu* (mean) and *alpha* (dispersion). *alpha* is defined as *1/k* where *k* is the failure limit of the
+    number of unsuccessful experiments (generalized to real numbers).
+    Samples will always be returned as a floating point data type.
+
+    Example::
+
+       generalized_negative_binomial(mu=2.0, alpha=0.3, shape=(2,2)) = [[ 2.,  1.],
+                                                                        [ 6.,  4.]]
+
+
+    Defined in src/operator/random/sample_op.cc:L168
+
+    Parameters
+    ----------
+    mu : float, optional, default=1
+        Mean of the negative binomial distribution.
+    alpha : float, optional, default=1
+        Alpha (dispersion) parameter of the negative binomial distribution.
+    shape : Shape(tuple), optional, default=[]
+        Shape of the output.
+    ctx : string, optional, default=''
+        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
+    dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
+        DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
+def _random_negative_binomial(k=_Null, p=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+    r"""Draw random samples from a negative binomial distribution.
+
+    Samples are distributed according to a negative binomial distribution parametrized by
+    *k* (limit of unsuccessful experiments) and *p* (failure probability in each experiment).
+    Samples will always be returned as a floating point data type.
+
+    Example::
+
+       negative_binomial(k=3, p=0.4, shape=(2,2)) = [[ 4.,  7.],
+                                                     [ 2.,  5.]]
+
+
+    Defined in src/operator/random/sample_op.cc:L149
+
+    Parameters
+    ----------
+    k : int, optional, default='1'
+        Limit of unsuccessful experiments.
+    p : float, optional, default=1
+        Failure probability in each experiment.
+    shape : Shape(tuple), optional, default=[]
+        Shape of the output.
+    ctx : string, optional, default=''
+        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
+    dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
+        DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
+def _random_normal(loc=_Null, scale=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+    r"""Draw random samples from a normal (Gaussian) distribution.
+
+    .. note:: The existing alias ``normal`` is deprecated.
+
+    Samples are distributed according to a normal distribution parametrized by *loc* (mean) and *scale* (standard deviation).
+
+    Example::
+
+       normal(loc=0, scale=1, shape=(2,2)) = [[ 1.89171135, -1.16881478],
+                                              [-1.23474145,  1.55807114]]
+
+
+    Defined in src/operator/random/sample_op.cc:L85
+
+    Parameters
+    ----------
+    loc : float, optional, default=0
+        Mean of the distribution.
+    scale : float, optional, default=1
+        Standard deviation of the distribution.
+    shape : Shape(tuple), optional, default=[]
+        Shape of the output.
+    ctx : string, optional, default=''
+        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
+    dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
+        DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
+def _random_poisson(lam=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+    r"""Draw random samples from a Poisson distribution.
+
+    Samples are distributed according to a Poisson distribution parametrized by *lambda* (rate).
+    Samples will always be returned as a floating point data type.
+
+    Example::
+
+       poisson(lam=4, shape=(2,2)) = [[ 5.,  2.],
+                                      [ 4.,  6.]]
+
+
+    Defined in src/operator/random/sample_op.cc:L132
+
+    Parameters
+    ----------
+    lam : float, optional, default=1
+        Lambda parameter (rate) of the Poisson distribution.
+    shape : Shape(tuple), optional, default=[]
+        Shape of the output.
+    ctx : string, optional, default=''
+        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
+    dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
+        DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
+def _random_uniform(low=_Null, high=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
+    r"""Draw random samples from a uniform distribution.
+
+    .. note:: The existing alias ``uniform`` is deprecated.
+
+    Samples are uniformly distributed over the half-open interval *[low, high)*
+    (includes *low*, but excludes *high*).
+
+    Example::
+
+       uniform(low=0, high=1, shape=(2,2)) = [[ 0.60276335,  0.85794562],
+                                              [ 0.54488319,  0.84725171]]
+
+
+
+    Defined in src/operator/random/sample_op.cc:L66
+
+    Parameters
+    ----------
+    low : float, optional, default=0
+        Lower bound of the distribution.
+    high : float, optional, default=1
+        Upper bound of the distribution.
+    shape : Shape(tuple), optional, default=[]
+        Shape of the output.
+    ctx : string, optional, default=''
+        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
+    dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
+        DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -5624,26 +5309,6 @@ def _rmod_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs):
         source input
     scalar : float
         scalar input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _rnn_param_concat(*data, **kwargs):
-    r"""
-
-    Parameters
-    ----------
-    data : NDArray[]
-        List of arrays to concatenate
-    dim : int, optional, default='1'
-        the dimension to be concated.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -5866,8 +5531,8 @@ def _sample_multinomial(data=None, shape=_Null, get_prob=_Null, dtype=_Null, out
         Shape to be sampled from each random distribution.
     get_prob : boolean, optional, default=0
         Whether to also return the log probability of sampled result. This is usually used for differentiating through stochastic variables, e.g. in reinforcement learning.
-    dtype : {'float16', 'float32', 'float64', 'int32', 'uint8'},optional, default='int32'
-        DType of the output in case this can't be inferred.
+    dtype : {'int32'},optional, default='int32'
+        DType of the output in case this can't be inferred. Only support int32 for now.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -6084,50 +5749,6 @@ def _sample_uniform(low=None, high=None, shape=_Null, dtype=_Null, out=None, nam
     """
     return (0,)
 
-def _sample_unique_zipfian(range_max=_Null, shape=_Null, out=None, name=None, **kwargs):
-    r"""Draw random samples from an an approximately log-uniform
-    or Zipfian distribution without replacement.
-
-    This operation takes a 2-D shape `(batch_size, num_sampled)`,
-    and randomly generates *num_sampled* samples from the range of integers [0, range_max)
-    for each instance in the batch.
-
-    The elements in each instance are drawn without replacement from the base distribution.
-    The base distribution for this operator is an approximately log-uniform or Zipfian distribution:
-
-      P(class) = (log(class + 2) - log(class + 1)) / log(range_max + 1)
-
-    Additionaly, it also returns the number of trials used to obtain `num_sampled` samples for
-    each instance in the batch.
-
-    Example::
-
-       samples, trials = _sample_unique_zipfian(750000, shape=(4, 8192))
-       unique(samples[0]) = 8192
-       unique(samples[3]) = 8192
-       trials[0] = 16435
-
-
-
-    Defined in src/operator/random/unique_sample_op.cc:L66
-
-    Parameters
-    ----------
-    range_max : int, required
-        The number of possible classes.
-    shape : Shape(tuple), optional, default=[]
-        2-D shape of the output, where shape[0] is the batch size, and shape[1] is the number of candidates to sample for each batch.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def _scatter_elemwise_div(lhs=None, rhs=None, out=None, name=None, **kwargs):
     r"""Divides arguments element-wise.  If the left-hand-side input is 'row_sparse', then
     only the values which exist in the left-hand sparse array are computed.  The 'missing' values
@@ -6222,12 +5843,10 @@ def _scatter_plus_scalar(data=None, scalar=_Null, out=None, name=None, **kwargs)
     """
     return (0,)
 
-def _scatter_set_nd(lhs=None, rhs=None, indices=None, shape=_Null, out=None, name=None, **kwargs):
+def _scatter_set_nd(data=None, indices=None, shape=_Null, out=None, name=None, **kwargs):
     r"""This operator has the same functionality as scatter_nd
     except that it does not reset the elements not indexed by the input
-    index `NDArray` in the input data `NDArray`. output should be explicitly
-    given and be the same as lhs.
-
+    index `NDArray` in the input data `NDArray`.
     .. note:: This operator is for internal use only.
 
     Examples::
@@ -6235,17 +5854,15 @@ def _scatter_set_nd(lhs=None, rhs=None, indices=None, shape=_Null, out=None, nam
       data = [2, 3, 0]
       indices = [[1, 1, 0], [0, 1, 0]]
       out = [[1, 1], [1, 1]]
-      _scatter_set_nd(lhs=out, rhs=data, indices=indices, out=out)
+      scatter_nd(data=data, indices=indices, out=out)
       out = [[0, 1], [2, 3]]
 
 
 
     Parameters
     ----------
-    lhs : NDArray
-        source input
-    rhs : NDArray
-        value to assign
+    data : NDArray
+        data
     indices : NDArray
         indices
     shape : Shape(tuple), required
@@ -6312,7 +5929,7 @@ def _slice_assign(lhs=None, rhs=None, begin=_Null, end=_Null, step=_Null, out=No
     - lhs and rhs are of the same data type, and on the same device.
 
 
-    From:src/operator/tensor/matrix_op.cc:440
+    From:src/operator/tensor/matrix_op.cc:438
 
     Parameters
     ----------
@@ -6345,13 +5962,13 @@ def _slice_assign_scalar(data=None, scalar=_Null, begin=_Null, end=_Null, step=_
     - output should be explicitly given and be the same as input
     )
 
-    From:src/operator/tensor/matrix_op.cc:465
+    From:src/operator/tensor/matrix_op.cc:463
 
     Parameters
     ----------
     data : NDArray
         Source input
-    scalar : double, optional, default=0
+    scalar : float, optional, default=0
         The scalar value for assignment.
     begin : Shape(tuple), required
         starting indices for the slice operation, supports negative indices.
@@ -6428,10 +6045,6 @@ def _sub(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_sub(row_sparse, row_sparse) = row_sparse
        - elemwise_sub(csr, csr) = csr
-       - elemwise_sub(default, csr) = default
-       - elemwise_sub(csr, default) = default
-       - elemwise_sub(default, rsp) = default
-       - elemwise_sub(rsp, default) = default
        - otherwise, ``elemwise_sub`` generates output with default storage
 
 
@@ -6442,71 +6055,6 @@ def _sub(lhs=None, rhs=None, out=None, name=None, **kwargs):
         first input
     rhs : NDArray
         second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _unravel_index(data=None, shape=_Null, out=None, name=None, **kwargs):
-    r"""Converts an array of flat indices into a batch of index arrays. The operator follows numpy conventions so a single multi index is given by a column of the output matrix.
-
-    Examples::
-
-       A = [22,41,37]
-       unravel(A, shape=(7,6)) = [[3,6,6],[4,5,1]]
-
-
-
-    Defined in src/operator/tensor/ravel.cc:L65
-
-    Parameters
-    ----------
-    data : NDArray
-        Array of flat indices
-    shape : Shape(tuple), optional, default=[]
-        Shape of the array into which the multi-indices apply.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def _while_loop(*data, **kwargs):
-    r"""Run a while loop over with user-defined condition and computation
-
-    From:src/operator/control_flow.cc:1317
-
-    Parameters
-    ----------
-    cond : Symbol
-        Input graph for the loop condition.
-    func : Symbol
-        Input graph for the loop body.
-    data : NDArray[]
-        The input arrays that include data arrays and states.
-    num_outputs : int, required
-        The number of outputs of the subgraph.
-    num_out_data : int, required
-        The number of outputs from the function body.
-    max_iterations : int, required
-        Maximum number of iterations.
-    cond_input_locs : tuple of <>, required
-        The locations of cond's inputs in the given inputs.
-    func_input_locs : tuple of <>, required
-        The locations of func's inputs in the given inputs.
-    func_var_locs : tuple of <>, required
-        The locations of loop_vars among func's inputs.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -6540,26 +6088,4 @@ def _zeros(shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def _zeros_without_dtype(shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
-    r"""fill target with zeros without default dtype
-
-    Parameters
-    ----------
-    shape : Shape(tuple), optional, default=[]
-        The shape of the output
-    ctx : string, optional, default=''
-        Context of output, in format [cpu|gpu|cpu_pinned](n).Only used for imperative calls.
-    dtype : int, optional, default='-1'
-        Target data type.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-__all__ = ['_CachedOp', '_CrossDeviceCopy', '_CustomFunction', '_Div', '_DivScalar', '_Equal', '_EqualScalar', '_Greater', '_GreaterEqualScalar', '_GreaterScalar', '_Greater_Equal', '_Hypot', '_HypotScalar', '_Lesser', '_LesserEqualScalar', '_LesserScalar', '_Lesser_Equal', '_LogicalAndScalar', '_LogicalOrScalar', '_LogicalXorScalar', '_Logical_And', '_Logical_Or', '_Logical_Xor', '_Maximum', '_MaximumScalar', '_Minimum', '_MinimumScalar', '_Minus', '_MinusScalar', '_Mod', '_ModScalar', '_Mul', '_MulScalar', '_NDArray', '_Native', '_NoGradient', '_NotEqualScalar', '_Not_Equal', '_Plus', '_PlusScalar', '_Power', '_PowerScalar', '_RDivScalar', '_RMinusScalar', '_RModScalar', '_RPowerScalar', '_add', '_arange', '_backward_Activation', '_backward_BatchNorm', '_backward_BatchNorm_v1', '_backward_BilinearSampler', '_backward_CachedOp', '_backward_Concat', '_backward_Convolution', '_backward_Convolution_v1', '_backward_Correlation', '_backward_Crop', '_backward_Custom', '_backward_CustomFunction', '_backward_Deconvolution', '_backward_Dropout', '_backward_Embedding', '_backward_FullyConnected', '_backward_GridGenerator', '_backward_IdentityAttachKLSparseReg', '_backward_InstanceNorm', '_backward_L2Normalization', '_backward_LRN', '_backward_LayerNorm', '_backward_LeakyReLU', '_backward_MakeLoss', '_backward_Pad', '_backward_Pooling', '_backward_Pooling_v1', '_backward_RNN', '_backward_ROIAlign', '_backward_ROIPooling', '_backward_SVMOutput', '_backward_SequenceLast', '_backward_SequenceMask', '_backward_SequenceReverse', '_backward_SliceChannel', '_backward_Softmax', '_backward_SoftmaxActivation', '_backward_SoftmaxOutput', '_backward_SparseEmbedding', '_backward_SpatialTransformer', '_backward_SwapAxis', '_backward_UpSampling', '_backward__CrossDeviceCopy', '_backward__NDArray', '_backward__Native', '_backward__contrib_DeformableConvolution', '_backward__contrib_DeformablePSROIPooling', '_backward__contrib_MultiBoxDetection', '_backward__contrib_MultiBoxPrior', '_backward__contrib_MultiBoxTarget', '_backward__contrib_MultiProposal', '_backward__contrib_PSROIPooling', '_backward__contrib_Proposal', '_backward__contrib_SyncBatchNorm', '_backward__contrib_count_sketch', '_backward__contrib_fft', '_backward__contrib_ifft', '_backward_abs', '_backward_add', '_backward_arccos', '_backward_arccosh', '_backward_arcsin', '_backward_arcsinh', '_backward_arctan', '_backward_arctanh', '_backward_batch_dot', '_backward_broadcast_add', '_backward_broadcast_div', '_backward_broadcast_hypot', '_backward_broadcast_maximum', '_backward_broadcast_minimum', '_backward_broadcast_mod', '_backward_broadcast_mul', '_backward_broadcast_power', '_backward_broadcast_sub', '_backward_cast', '_backward_cbrt', '_backward_clip', '_backward_cond', '_backward_contrib_AdaptiveAvgPooling2D', '_backward_contrib_BilinearResize2D', '_backward_contrib_bipartite_matching', '_backward_contrib_boolean_mask', '_backward_contrib_box_iou', '_backward_contrib_box_nms', '_backward_copy', '_backward_cos', '_backward_cosh', '_backward_ctc_loss', '_backward_degrees', '_backward_diag', '_backward_div', '_backward_div_scalar', '_backward_dot', '_backward_erf', '_backward_expm1', '_backward_foreach', '_backward_gamma', '_backward_gammaln', '_backward_gather_nd', '_backward_hard_sigmoid', '_backward_hypot', '_backward_hypot_scalar', '_backward_linalg_gelqf', '_backward_linalg_gemm', '_backward_linalg_gemm2', '_backward_linalg_potrf', '_backward_linalg_potri', '_backward_linalg_sumlogdiag', '_backward_linalg_syevd', '_backward_linalg_syrk', '_backward_linalg_trmm', '_backward_linalg_trsm', '_backward_linear_reg_out', '_backward_log', '_backward_log10', '_backward_log1p', '_backward_log2', '_backward_log_softmax', '_backward_logistic_reg_out', '_backward_mae_reg_out', '_backward_max', '_backward_maximum', '_backward_maximum_scalar', '_backward_mean', '_backward_min', '_backward_minimum', '_backward_minimum_scalar', '_backward_mod', '_backward_mod_scalar', '_backward_mul', '_backward_mul_scalar', '_backward_nanprod', '_backward_nansum', '_backward_norm', '_backward_pick', '_backward_power', '_backward_power_scalar', '_backward_prod', '_backward_radians', '_backward_rcbrt', '_backward_rdiv_scalar', '_backward_reciprocal', '_backward_relu', '_backward_repeat', '_backward_reverse', '_backward_rmod_scalar', '_backward_rpower_scalar', '_backward_rsqrt', '_backward_sample_multinomial', '_backward_sigmoid', '_backward_sign', '_backward_sin', '_backward_sinh', '_backward_slice', '_backward_slice_axis', '_backward_slice_like', '_backward_smooth_l1', '_backward_softmax', '_backward_softmax_cross_entropy', '_backward_softmin', '_backward_softsign', '_backward_sparse_retain', '_backward_sqrt', '_backward_square', '_backward_square_sum', '_backward_squeeze', '_backward_stack', '_backward_sub', '_backward_sum', '_backward_take', '_backward_tan', '_backward_tanh', '_backward_tile', '_backward_topk', '_backward_where', '_backward_while_loop', '_broadcast_backward', '_cond', '_copy', '_copyto', '_crop_assign', '_crop_assign_scalar', '_cvcopyMakeBorder', '_cvimdecode', '_cvimread', '_cvimresize', '_div', '_div_scalar', '_equal', '_equal_scalar', '_eye', '_foreach', '_full', '_grad_add', '_greater', '_greater_equal', '_greater_equal_scalar', '_greater_scalar', '_histogram', '_hypot', '_hypot_scalar', '_identity_with_attr_like_rhs', '_imdecode', '_lesser', '_lesser_equal', '_lesser_equal_scalar', '_lesser_scalar', '_logical_and', '_logical_and_scalar', '_logical_or', '_logical_or_scalar', '_logical_xor', '_logical_xor_scalar', '_maximum', '_maximum_scalar', '_minimum', '_minimum_scalar', '_minus', '_minus_scalar', '_mod', '_mod_scalar', '_mul', '_mul_scalar', '_not_equal', '_not_equal_scalar', '_onehot_encode', '_ones', '_plus', '_plus_scalar', '_power', '_power_scalar', '_ravel_multi_index', '_rdiv_scalar', '_rminus_scalar', '_rmod_scalar', '_rnn_param_concat', '_rpower_scalar', '_sample_exponential', '_sample_gamma', '_sample_generalized_negative_binomial', '_sample_multinomial', '_sample_negative_binomial', '_sample_normal', '_sample_poisson', '_sample_uniform', '_sample_unique_zipfian', '_scatter_elemwise_div', '_scatter_minus_scalar', '_scatter_plus_scalar', '_scatter_set_nd', '_set_value', '_shuffle', '_slice_assign', '_slice_assign_scalar', '_square_sum', '_sub', '_unravel_index', '_while_loop', '_zeros', '_zeros_without_dtype']
+__all__ = ['_CachedOp', '_CrossDeviceCopy', '_CustomFunction', '_Div', '_DivScalar', '_Equal', '_EqualScalar', '_Greater', '_GreaterEqualScalar', '_GreaterScalar', '_Greater_Equal', '_Hypot', '_HypotScalar', '_Lesser', '_LesserEqualScalar', '_LesserScalar', '_Lesser_Equal', '_Maximum', '_MaximumScalar', '_Minimum', '_MinimumScalar', '_Minus', '_MinusScalar', '_Mod', '_ModScalar', '_Mul', '_MulScalar', '_NDArray', '_Native', '_NoGradient', '_NotEqualScalar', '_Not_Equal', '_Plus', '_PlusScalar', '_Power', '_PowerScalar', '_RDivScalar', '_RMinusScalar', '_RModScalar', '_RPowerScalar', '_add', '_arange', '_backward_Activation', '_backward_BatchNorm', '_backward_BatchNorm_v1', '_backward_BilinearSampler', '_backward_CachedOp', '_backward_Concat', '_backward_Convolution', '_backward_Convolution_v1', '_backward_Correlation', '_backward_Crop', '_backward_Custom', '_backward_CustomFunction', '_backward_Deconvolution', '_backward_Dropout', '_backward_Embedding', '_backward_FullyConnected', '_backward_GridGenerator', '_backward_IdentityAttachKLSparseReg', '_backward_InstanceNorm', '_backward_L2Normalization', '_backward_LRN', '_backward_LayerNorm', '_backward_LeakyReLU', '_backward_MakeLoss', '_backward_Pad', '_backward_Pooling', '_backward_Pooling_v1', '_backward_RNN', '_backward_ROIPooling', '_backward_SVMOutput', '_backward_SequenceLast', '_backward_SequenceMask', '_backward_SequenceReverse', '_backward_SliceChannel', '_backward_Softmax', '_backward_SoftmaxActivation', '_backward_SoftmaxOutput', '_backward_SparseEmbedding', '_backward_SpatialTransformer', '_backward_SwapAxis', '_backward_UpSampling', '_backward__CrossDeviceCopy', '_backward__NDArray', '_backward__Native', '_backward__contrib_CTCLoss', '_backward__contrib_DeformableConvolution', '_backward__contrib_DeformablePSROIPooling', '_backward__contrib_MultiBoxDetection', '_backward__contrib_MultiBoxPrior', '_backward__contrib_MultiBoxTarget', '_backward__contrib_MultiProposal', '_backward__contrib_PSROIPooling', '_backward__contrib_Proposal', '_backward__contrib_count_sketch', '_backward__contrib_fft', '_backward__contrib_ifft', '_backward_abs', '_backward_add', '_backward_arccos', '_backward_arccosh', '_backward_arcsin', '_backward_arcsinh', '_backward_arctan', '_backward_arctanh', '_backward_batch_dot', '_backward_broadcast_add', '_backward_broadcast_div', '_backward_broadcast_hypot', '_backward_broadcast_maximum', '_backward_broadcast_minimum', '_backward_broadcast_mod', '_backward_broadcast_mul', '_backward_broadcast_power', '_backward_broadcast_sub', '_backward_cast', '_backward_cbrt', '_backward_clip', '_backward_contrib_AdaptiveAvgPooling2D', '_backward_contrib_BilinearResize2D', '_backward_contrib_bipartite_matching', '_backward_contrib_box_iou', '_backward_contrib_box_nms', '_backward_copy', '_backward_cos', '_backward_cosh', '_backward_degrees', '_backward_div', '_backward_div_scalar', '_backward_dot', '_backward_expm1', '_backward_gamma', '_backward_gammaln', '_backward_gather_nd', '_backward_hypot', '_backward_hypot_scalar', '_backward_linalg_gelqf', '_backward_linalg_gemm', '_backward_linalg_gemm2', '_backward_linalg_potrf', '_backward_linalg_potri', '_backward_linalg_sumlogdiag', '_backward_linalg_syevd', '_backward_linalg_syrk', '_backward_linalg_trmm', '_backward_linalg_trsm', '_backward_linear_reg_out', '_backward_log', '_backward_log10', '_backward_log1p', '_backward_log2', '_backward_log_softmax', '_backward_logistic_reg_out', '_backward_mae_reg_out', '_backward_max', '_backward_maximum', '_backward_maximum_scalar', '_backward_mean', '_backward_min', '_backward_minimum', '_backward_minimum_scalar', '_backward_mod', '_backward_mod_scalar', '_backward_mul', '_backward_mul_scalar', '_backward_nanprod', '_backward_nansum', '_backward_norm', '_backward_pick', '_backward_power', '_backward_power_scalar', '_backward_prod', '_backward_radians', '_backward_rcbrt', '_backward_rdiv_scalar', '_backward_reciprocal', '_backward_relu', '_backward_repeat', '_backward_reverse', '_backward_rmod_scalar', '_backward_rpower_scalar', '_backward_rsqrt', '_backward_sample_multinomial', '_backward_sigmoid', '_backward_sign', '_backward_sin', '_backward_sinh', '_backward_slice', '_backward_slice_axis', '_backward_slice_like', '_backward_smooth_l1', '_backward_softmax', '_backward_softmax_cross_entropy', '_backward_softsign', '_backward_sparse_retain', '_backward_sqrt', '_backward_square', '_backward_square_sum', '_backward_squeeze', '_backward_stack', '_backward_sub', '_backward_sum', '_backward_take', '_backward_tan', '_backward_tanh', '_backward_tile', '_backward_topk', '_backward_where', '_broadcast_backward', '_copy', '_copyto', '_crop_assign', '_crop_assign_scalar', '_cvcopyMakeBorder', '_cvimdecode', '_cvimread', '_cvimresize', '_div', '_div_scalar', '_equal', '_equal_scalar', '_eye', '_full', '_grad_add', '_greater', '_greater_equal', '_greater_equal_scalar', '_greater_scalar', '_hypot', '_hypot_scalar', '_identity_with_attr_like_rhs', '_imdecode', '_lesser', '_lesser_equal', '_lesser_equal_scalar', '_lesser_scalar', '_maximum', '_maximum_scalar', '_minimum', '_minimum_scalar', '_minus', '_minus_scalar', '_mod', '_mod_scalar', '_mul', '_mul_scalar', '_not_equal', '_not_equal_scalar', '_onehot_encode', '_ones', '_plus', '_plus_scalar', '_power', '_power_scalar', '_random_exponential', '_random_gamma', '_random_generalized_negative_binomial', '_random_negative_binomial', '_random_normal', '_random_poisson', '_random_uniform', '_rdiv_scalar', '_rminus_scalar', '_rmod_scalar', '_rpower_scalar', '_sample_exponential', '_sample_gamma', '_sample_generalized_negative_binomial', '_sample_multinomial', '_sample_negative_binomial', '_sample_normal', '_sample_poisson', '_sample_uniform', '_scatter_elemwise_div', '_scatter_minus_scalar', '_scatter_plus_scalar', '_scatter_set_nd', '_set_value', '_shuffle', '_slice_assign', '_slice_assign_scalar', '_square_sum', '_sub', '_zeros']

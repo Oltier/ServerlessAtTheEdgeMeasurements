@@ -16,9 +16,6 @@
 # under the License.
 
 # coding: utf-8
-"""ONNX Export module"""
-from __future__ import absolute_import
-
-from . import export_model
-from . import export_onnx
-from . import _op_translations
+"""ONNX Import module"""
+from . import import_model
+from . import import_onnx

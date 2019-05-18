@@ -50,7 +50,7 @@ def gelqf(A=None, out=None, name=None, **kwargs):
              [-19.09768702, 0.52758934]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L569
+    Defined in src/operator/tensor/la_op.cc:L529
 
     Parameters
     ----------
@@ -67,7 +67,7 @@ def gelqf(A=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, beta=_Null, axis=_Null, out=None, name=None, **kwargs):
+def gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, beta=_Null, out=None, name=None, **kwargs):
     r"""Performs general matrix multiplication and accumulation.
     Input are tensors *A*, *B*, *C*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
@@ -79,25 +79,8 @@ def gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Nu
     Here, *alpha* and *beta* are scalar parameters, and *op()* is either the identity or
     matrix transposition (depending on *transpose_a*, *transpose_b*).
 
-    If *n>2*, *gemm* is performed separately for a batch of matrices. The column indices of the matrices
-    are given by the last dimensions of the tensors, the row indices by the axis specified with the *axis* 
-    parameter. By default, the trailing two dimensions will be used for matrix encoding.
-
-    For a non-default axis parameter, the operation performed is equivalent to a series of swapaxes/gemm/swapaxes
-    calls. For example let *A*, *B*, *C* be 5 dimensional tensors. Then gemm(*A*, *B*, *C*, axis=1) is equivalent to
-
-        A1 = swapaxes(A, dim1=1, dim2=3)
-        B1 = swapaxes(B, dim1=1, dim2=3)
-        C = swapaxes(C, dim1=1, dim2=3)
-        C = gemm(A1, B1, C)
-        C = swapaxis(C, dim1=1, dim2=3)
-
-    without the overhead of the additional swapaxis operations.
-
-    When the input data is of type float32 and the environment variables MXNET_CUDA_ALLOW_TENSOR_CORE
-    and MXNET_CUDA_TENSOR_OP_MATH_ALLOW_CONVERSION are set to 1, this operator will try to use
-    pseudo-float16 precision (float32 math with float16 I/O) precision in order to use
-    Tensor Cores on suitable NVIDIA GPUs. This can sometimes give significant speedups.
+    If *n>2*, *gemm* is performed separately on the trailing two dimensions for all inputs
+    (batch mode).
 
     .. note:: The operator supports float32 and float64 data types only.
 
@@ -118,7 +101,7 @@ def gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Nu
                = [[[104.0]], [[0.14]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L87
+    Defined in src/operator/tensor/la_op.cc:L69
 
     Parameters
     ----------
@@ -136,8 +119,6 @@ def gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Nu
         Scalar factor multiplied with A*B.
     beta : double, optional, default=1
         Scalar factor multiplied with C.
-    axis : int, optional, default='-2'
-        Axis corresponding to the matrix rows.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -149,7 +130,7 @@ def gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Nu
     """
     return (0,)
 
-def gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, axis=_Null, out=None, name=None, **kwargs):
+def gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, out=None, name=None, **kwargs):
     r"""Performs general matrix multiplication.
     Input are tensors *A*, *B*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
@@ -161,24 +142,8 @@ def gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, axi
     Here *alpha* is a scalar parameter and *op()* is either the identity or the matrix
     transposition (depending on *transpose_a*, *transpose_b*).
 
-    If *n>2*, *gemm* is performed separately for a batch of matrices. The column indices of the matrices
-    are given by the last dimensions of the tensors, the row indices by the axis specified with the *axis* 
-    parameter. By default, the trailing two dimensions will be used for matrix encoding.
-
-    For a non-default axis parameter, the operation performed is equivalent to a series of swapaxes/gemm/swapaxes
-    calls. For example let *A*, *B* be 5 dimensional tensors. Then gemm(*A*, *B*, axis=1) is equivalent to
-
-        A1 = swapaxes(A, dim1=1, dim2=3)
-        B1 = swapaxes(B, dim1=1, dim2=3)
-        C = gemm2(A1, B1)
-        C = swapaxis(C, dim1=1, dim2=3)
-
-    without the overhead of the additional swapaxis operations.
-
-    When the input data is of type float32 and the environment variables MXNET_CUDA_ALLOW_TENSOR_CORE
-    and MXNET_CUDA_TENSOR_OP_MATH_ALLOW_CONVERSION are set to 1, this operator will try to use
-    pseudo-float16 precision (float32 math with float16 I/O) precision in order to use
-    Tensor Cores on suitable NVIDIA GPUs. This can sometimes give significant speedups.
+    If *n>2*, *gemm* is performed separately on the trailing two dimensions for all inputs
+    (batch mode).
 
     .. note:: The operator supports float32 and float64 data types only.
 
@@ -197,7 +162,7 @@ def gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, axi
                = [[[4.0]], [[0.04 ]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L162
+    Defined in src/operator/tensor/la_op.cc:L128
 
     Parameters
     ----------
@@ -211,8 +176,6 @@ def gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, axi
         Multiply with transposed of second input (B).
     alpha : double, optional, default=1
         Scalar factor multiplied with A*B.
-    axis : int, optional, default='-2'
-        Axis corresponding to the matrix row indices.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -228,12 +191,11 @@ def potrf(A=None, out=None, name=None, **kwargs):
     r"""Performs Cholesky factorization of a symmetric positive-definite matrix.
     Input is a tensor *A* of dimension *n >= 2*.
 
-    If *n=2*, the Cholesky factor *B* of the symmetric, positive definite matrix *A* is
-    computed. *B* is triangular (entries of upper or lower triangle are all zero), has
+    If *n=2*, the Cholesky factor *L* of the symmetric, positive definite matrix *A* is
+    computed. *L* is lower triangular (entries of upper triangle are all zero), has
     positive diagonal entries, and:
 
-      *A* = *B* \* *B*\ :sup:`T`  if *lower* = *true*
-      *A* = *B*\ :sup:`T` \* *B*  if *lower* = *false*
+      *A* = *L* \* *L*\ :sup:`T`
 
     If *n>2*, *potrf* is performed separately on the trailing two dimensions for all inputs
     (batch mode).
@@ -251,7 +213,7 @@ def potrf(A=None, out=None, name=None, **kwargs):
        potrf(A) = [[[2.0, 0], [0.5, 2.0]], [[4.0, 0], [1.0, 4.0]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L213
+    Defined in src/operator/tensor/la_op.cc:L178
 
     Parameters
     ----------
@@ -272,11 +234,10 @@ def potri(A=None, out=None, name=None, **kwargs):
     r"""Performs matrix inversion from a Cholesky factorization.
     Input is a tensor *A* of dimension *n >= 2*.
 
-    If *n=2*, *A* is a triangular matrix (entries of upper or lower triangle are all zero)
+    If *n=2*, *A* is a lower triangular matrix (entries of upper triangle are all zero)
     with positive diagonal. We compute:
 
-      *out* = *A*\ :sup:`-T` \* *A*\ :sup:`-1` if *lower* = *true*
-      *out* = *A*\ :sup:`-1` \* *A*\ :sup:`-T` if *lower* = *false*
+      *out* = *A*\ :sup:`-T` \* *A*\ :sup:`-1`
 
     In other words, if *A* is the Cholesky factor of a symmetric positive definite matrix
     *B* (obtained by *potrf*), then
@@ -304,7 +265,7 @@ def potri(A=None, out=None, name=None, **kwargs):
                    [[0.06641, -0.01562], [-0.01562, 0,0625]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L274
+    Defined in src/operator/tensor/la_op.cc:L236
 
     Parameters
     ----------
@@ -344,7 +305,7 @@ def sumlogdiag(A=None, out=None, name=None, **kwargs):
        sumlogdiag(A) = [1.9459, 3.9318]
 
 
-    Defined in src/operator/tensor/la_op.cc:L445
+    Defined in src/operator/tensor/la_op.cc:L405
 
     Parameters
     ----------
@@ -407,7 +368,7 @@ def syevd(A=None, out=None, name=None, **kwargs):
             [0.17157288, 5.82842712]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L638
+    Defined in src/operator/tensor/la_op.cc:L598
 
     Parameters
     ----------
@@ -460,7 +421,7 @@ def syrk(A=None, transpose=_Null, alpha=_Null, out=None, name=None, **kwargs):
        syrk(A, alpha=2., transpose=False) = [[[4.]], [[0.04]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L501
+    Defined in src/operator/tensor/la_op.cc:L461
 
     Parameters
     ----------
@@ -481,12 +442,12 @@ def syrk(A=None, transpose=_Null, alpha=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_Null, out=None, name=None, **kwargs):
+def trmm(A=None, B=None, transpose=_Null, rightside=_Null, alpha=_Null, out=None, name=None, **kwargs):
     r"""Performs multiplication with a lower triangular matrix.
     Input are tensors *A*, *B*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
 
-    If *n=2*, *A* must be triangular. The operator performs the BLAS3 function
+    If *n=2*, *A* must be lower triangular. The operator performs the BLAS3 function
     *trmm*:
 
        *out* = *alpha* \* *op*\ (*A*) \* *B*
@@ -518,7 +479,7 @@ def trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_N
                                 [[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L333
+    Defined in src/operator/tensor/la_op.cc:L293
 
     Parameters
     ----------
@@ -530,8 +491,6 @@ def trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_N
         Use transposed of the triangular matrix
     rightside : boolean, optional, default=0
         Multiply triangular matrix from the right to non-triangular one.
-    lower : boolean, optional, default=1
-        True if the triangular matrix is lower triangular, false if it is upper triangular.
     alpha : double, optional, default=1
         Scalar factor to be applied to the result.
 
@@ -545,12 +504,12 @@ def trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_N
     """
     return (0,)
 
-def trsm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_Null, out=None, name=None, **kwargs):
+def trsm(A=None, B=None, transpose=_Null, rightside=_Null, alpha=_Null, out=None, name=None, **kwargs):
     r"""Solves matrix equation involving a lower triangular matrix.
     Input are tensors *A*, *B*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
 
-    If *n=2*, *A* must be triangular. The operator performs the BLAS3 function
+    If *n=2*, *A* must be lower triangular. The operator performs the BLAS3 function
     *trsm*, solving for *out* in:
 
        *op*\ (*A*) \* *out* = *alpha* \* *B*
@@ -582,7 +541,7 @@ def trsm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_N
                                 [[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L396
+    Defined in src/operator/tensor/la_op.cc:L356
 
     Parameters
     ----------
@@ -594,8 +553,6 @@ def trsm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_N
         Use transposed of the triangular matrix
     rightside : boolean, optional, default=0
         Multiply triangular matrix from the right to non-triangular one.
-    lower : boolean, optional, default=1
-        True if the triangular matrix is lower triangular, false if it is upper triangular.
     alpha : double, optional, default=1
         Scalar factor to be applied to the result.
 

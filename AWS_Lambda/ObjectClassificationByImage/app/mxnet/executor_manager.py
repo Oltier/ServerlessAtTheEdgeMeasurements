@@ -127,7 +127,7 @@ def _bind_exec(sym, ctx, input_shapes, param_names, need_grad=False,
     assert(arg_types is not None)
 
     arg_arrays = []
-    grad_arrays = {} if need_grad is not False else None
+    grad_arrays = {} if need_grad != False else None
 
     arg_names = sym.list_arguments()
 
@@ -286,13 +286,10 @@ class DataParallelExecutorGroup(object):
         for texec in self.train_execs:
             texec.backward()
 
-    def update_metric(self, metric, labels, pre_sliced=False):
+    def update_metric(self, metric, labels):
         """Update evaluation metric with label and current outputs."""
-        for current_exec, (texec, islice) in enumerate(zip(self.train_execs, self.slices)):
-            if not pre_sliced:
-                labels_slice = [label[islice] for label in labels]
-            else:
-                labels_slice = labels[current_exec]
+        for texec, islice in zip(self.train_execs, self.slices):
+            labels_slice = [label[islice] for label in labels]
             metric.update(labels_slice, texec.outputs)
 
 class DataParallelExecutorManager(object):
@@ -439,6 +436,6 @@ class DataParallelExecutorManager(object):
         """Run backward on the current executor."""
         self.curr_execgrp.backward()
 
-    def update_metric(self, metric, labels, pre_sliced=False):
+    def update_metric(self, metric, labels):
         """Update metric with the current executor."""
-        self.curr_execgrp.update_metric(metric, labels, pre_sliced)
+        self.curr_execgrp.update_metric(metric, labels)

@@ -1,4 +1,3 @@
-# coding: utf-8
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,26 +15,20 @@
 # specific language governing permissions and limitations
 # under the License.
 
+# coding: utf-8
 # pylint: disable=too-many-lines
 """Weight updating functions."""
-import logging
 import math
 import pickle
 import warnings
 import numpy
-from ..base import py_str
-from ..ndarray import (NDArray, zeros, clip, sqrt, cast, maximum, abs as NDabs, array, multiply)
-from ..ndarray import (sgd_update, sgd_mom_update, adam_update, rmsprop_update, rmspropalex_update,
-                       mp_sgd_update, mp_sgd_mom_update, square, ftrl_update, ftml_update,
-                       signsgd_update, signum_update)
-from ..ndarray import sparse
-from ..random import normal
-
-__all__ = [
-    'AdaDelta', 'AdaGrad', 'Adam', 'Adamax', 'DCASGD', 'FTML', 'Ftrl', 'LBSGD',
-    'NAG', 'NDabs', 'Nadam', 'Optimizer', 'RMSProp', 'SGD', 'SGLD', 'Signum',
-    'Test', 'Updater', 'ccSGD', 'create', 'get_updater', 'register'
-]
+from .base import py_str
+from .ndarray import (NDArray, zeros, clip, sqrt, cast, maximum, abs as NDabs)
+from .ndarray import (sgd_update, sgd_mom_update, adam_update, rmsprop_update, rmspropalex_update,
+                      mp_sgd_update, mp_sgd_mom_update, square, ftrl_update, ftml_update,
+                      signsgd_update, signum_update)
+from .ndarray import sparse
+from .random import normal
 
 
 class Optimizer(object):
@@ -70,12 +63,11 @@ class Optimizer(object):
         The initial number of updates.
 
     multi_precision : bool, optional
-       Flag to control the internal precision of the optimizer.::
-
-           False: results in using the same precision as the weights (default),
-           True: makes internal 32-bit copy of the weights and applies gradients
-           in 32-bit precision even if actual weights used in the model have lower precision.
-           Turning this on can improve convergence and accuracy when training with float16.
+       Flag to control the internal precision of the optimizer.
+       ``False`` results in using the same precision as the weights (default),
+       ``True`` makes internal 32-bit copy of the weights and applies gradients
+       in 32-bit precision even if actual weights used in the model have lower precision.
+       Turning this on can improve convergence and accuracy when training with float16.
 
     Properties
     ----------
@@ -433,17 +425,6 @@ class Optimizer(object):
             wd *= self.wd_mult.get(self.idx2name[index], 1.0)
         return wd
 
-    def __getstate__(self):
-        ret = self.__dict__.copy()
-        # do not include param_dict in the state
-        del ret['param_dict']
-        return ret
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-        # param_dict needs to be explicitly set by the trainer
-        self.param_dict = {}
-
 # convenience wrapper for Optimizer.Register
 register = Optimizer.register   # pylint: disable=invalid-name
 
@@ -452,11 +433,11 @@ register = Optimizer.register   # pylint: disable=invalid-name
 class SGD(Optimizer):
     """The SGD optimizer with momentum and weight decay.
 
-    If the storage types of grad is ``row_sparse`` and ``lazy_update`` is True, \
+    If the storage types of weight and grad are both ``row_sparse``, and ``lazy_update`` is True, \
     **lazy updates** are applied by::
 
         for row in grad.indices:
-            rescaled_grad[row] = lr * (rescale_grad * clip(grad[row], clip_gradient) + wd * weight[row])
+            rescaled_grad[row] = lr * rescale_grad * clip(grad[row], clip_gradient) + wd * weight[row]
             state[row] = momentum[row] * state[row] + rescaled_grad[row]
             weight[row] = weight[row] - state[row]
 
@@ -469,7 +450,7 @@ class SGD(Optimizer):
 
     Otherwise, **standard updates** are applied by::
 
-        rescaled_grad = lr * (rescale_grad * clip(grad, clip_gradient) + wd * weight)
+        rescaled_grad = lr * rescale_grad * clip(grad, clip_gradient) + wd * weight
         state = momentum * state + rescaled_grad
         weight = weight - state
 
@@ -482,17 +463,16 @@ class SGD(Optimizer):
     Parameters
     ----------
     momentum : float, optional
-        The momentum value.
+       The momentum value.
     lazy_update : bool, optional
-        Default is True. If True, lazy updates are applied \
-        if the storage types of weight and grad are both ``row_sparse``.
+       Default is True. If True, lazy updates are applied \
+       if the storage types of weight and grad are both ``row_sparse``.
     multi_precision: bool, optional
-        Flag to control the internal precision of the optimizer.::
-
-            False: results in using the same precision as the weights (default),
-            True: makes internal 32-bit copy of the weights and applies gradients
-            in 32-bit precision even if actual weights used in the model have lower precision.
-            Turning this on can improve convergence and accuracy when training with float16.
+       Flag to control the internal precision of the optimizer.
+       ``False`` results in using the same precision as the weights (default),
+       ``True`` makes internal 32-bit copy of the weights and applies gradients \
+                in 32-bit precision even if actual weights used in the model have lower precision.\
+                Turning this on can improve convergence and accuracy when training with float16.
     """
     def __init__(self, momentum=0.0, lazy_update=True, **kwargs):
         super(SGD, self).__init__(**kwargs)
@@ -513,8 +493,8 @@ class SGD(Optimizer):
 
     def create_state(self, index, weight):
         momentum = None
+        stype = weight.stype if self.lazy_update else 'default'
         if self.momentum != 0.0:
-            stype = weight.stype if self.lazy_update else 'default'
             momentum = zeros(weight.shape, weight.context, dtype=weight.dtype, stype=stype)
         return momentum
 
@@ -534,9 +514,9 @@ class SGD(Optimizer):
         if not multi_precision:
             if state is not None:
                 sgd_mom_update(weight, grad, state, out=weight,
-                               lazy_update=self.lazy_update, lr=lr, wd=wd, **kwargs)
+                               lr=lr, wd=wd, **kwargs)
             else:
-                sgd_update(weight, grad, out=weight, lazy_update=self.lazy_update,
+                sgd_update(weight, grad, out=weight,
                            lr=lr, wd=wd, **kwargs)
         else:
             if state[0] is not None:
@@ -556,20 +536,15 @@ class SGD(Optimizer):
 
 @register
 class Signum(Optimizer):
-    r"""The Signum optimizer that takes the sign of gradient or momentum.
+    """The Signum optimizer that takes the sign of gradient or momentum.
 
-    The optimizer updates the weight by::
+    The optimizer updates the weight by:
 
         rescaled_grad = rescale_grad * clip(grad, clip_gradient) + wd * weight
         state = momentum * state + (1-momentum)*rescaled_grad
         weight = (1 - lr * wd_lh) * weight - lr * sign(state)
 
-    References
-    ----------
-    Jeremy Bernstein, Yu-Xiang Wang, Kamyar Azizzadenesheli & Anima Anandkumar. (2018).
-    signSGD: Compressed Optimisation for Non-Convex Problems. In ICML'18.
-
-    See: https://arxiv.org/abs/1802.04434
+    See the original paper at: https://jeremybernste.in/projects/amazon/signum.pdf
 
     For details of the update algorithm see
     :class:`~mxnet.ndarray.signsgd_update` and :class:`~mxnet.ndarray.signum_update`.
@@ -629,14 +604,6 @@ class FTML(Optimizer):
     *FTML - Follow the Moving Leader in Deep Learning*,
     available at http://proceedings.mlr.press/v70/zheng17a/zheng17a.pdf.
 
-    Denote time step by t. The optimizer updates the weight by::
-
-        rescaled_grad = clip(grad * rescale_grad + wd * weight, clip_gradient)
-        v = beta2 * v + (1 - beta2) * square(rescaled_grad)
-        d_t = (1 - power(beta1, t)) / lr * square_root(v / (1 - power(beta2, t))) + epsilon)
-        z = beta1 * z + (1 - beta1) * rescaled_grad - (d_t - beta1 * d_(t-1)) * weight
-        weight = - z / d_t
-
     This optimizer accepts the following parameters in addition to those accepted
     by :class:`.Optimizer`.
 
@@ -695,21 +662,20 @@ class LBSGD(Optimizer):
     Parameters
     ----------
     momentum : float, optional
-        The momentum value.
+       The momentum value.
     multi_precision: bool, optional
-        Flag to control the internal precision of the optimizer.::
-
-            False: results in using the same precision as the weights (default),
-            True: makes internal 32-bit copy of the weights and applies gradients
-            in 32-bit precision even if actual weights used in the model have lower precision.
-            Turning this on can improve convergence and accuracy when training with float16.
-
+       Flag to control the internal precision of the optimizer.
+       ``False`` results in using the same precision as the weights (default),
+       ``True`` makes internal 32-bit copy of the weights and applies gradients
+                in 32-bit precision even if actual weights used in the model have lower precision.`<
+                Turning this on can improve convergence and accuracy when training with float16.
     warmup_strategy: string ('linear', 'power2', 'sqrt'. , 'lars'   default : 'linear')
     warmup_epochs: unsigned, default: 5
     batch_scale:   unsigned, default: 1 (same as batch size*numworkers)
     updates_per_epoch: updates_per_epoch (default: 32, Default might not reflect true number batches per epoch. Used for warmup.)
     begin_epoch: unsigned, default 0, starting epoch.
     """
+
     def __init__(self, momentum=0.0, multi_precision=False, warmup_strategy='linear',
                  warmup_epochs=5, batch_scale=1, updates_per_epoch=32, begin_epoch=0, num_epochs=60,
                  **kwargs):
@@ -938,12 +904,11 @@ class NAG(Optimizer):
     momentum : float, optional
        The momentum value.
     multi_precision: bool, optional
-        Flag to control the internal precision of the optimizer.::
-
-            False: results in using the same precision as the weights (default),
-            True: makes internal 32-bit copy of the weights and applies gradients
-            in 32-bit precision even if actual weights used in the model have lower precision.
-            Turning this on can improve convergence and accuracy when training with float16.
+       Flag to control the internal precision of the optimizer.
+       ``False`` results in using the same precision as the weights (default),
+       ``True`` makes internal 32-bit copy of the weights and applies gradients \
+                in 32-bit precision even if actual weights used in the model have lower precision.\
+                Turning this on can improve convergence and accuracy when training with float16.
     """
     def __init__(self, momentum=0.0, **kwargs):
         super(NAG, self).__init__(**kwargs)
@@ -1020,7 +985,7 @@ class Adam(Optimizer):
     This class implements the optimizer described in *Adam: A Method for
     Stochastic Optimization*, available at http://arxiv.org/abs/1412.6980.
 
-    If the storage types of grad is ``row_sparse``, and ``lazy_update`` is True, \
+    If the storage types of weight and grad are both ``row_sparse``, and ``lazy_update`` is True, \
     **lazy updates** are applied by::
 
         for row in grad.indices:
@@ -1093,7 +1058,7 @@ class Adam(Optimizer):
 
         mean, var = state
         adam_update(weight, grad, mean, var, out=weight,
-                    lazy_update=self.lazy_update, lr=lr, wd=wd, **kwargs)
+                    lr=lr, wd=wd, **kwargs)
 
 @register
 class AdaGrad(Optimizer):
@@ -1102,13 +1067,6 @@ class AdaGrad(Optimizer):
     This class implements the AdaGrad optimizer described in *Adaptive Subgradient
     Methods for Online Learning and Stochastic Optimization*, and available at
     http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
-
-    This optimizer updates each weight by::
-
-        grad = clip(grad * rescale_grad, clip_gradient)
-        history += square(grad)
-        div = grad / sqrt(history + float_stable_eps)
-        weight += (div + weight * wd) * -lr
 
     This optimizer accepts the following parameters in addition to those accepted
     by :class:`.Optimizer`.
@@ -1120,7 +1078,7 @@ class AdaGrad(Optimizer):
     Parameters
     ----------
     eps: float, optional
-        Initial value of the history accumulator. Avoids division by 0.
+        Small value to avoid division by 0.
 
     """
     def __init__(self, eps=1e-7, **kwargs):
@@ -1137,7 +1095,7 @@ class AdaGrad(Optimizer):
         lr = self._get_lr(index)
         wd = self._get_wd(index)
 
-        is_sparse = grad.stype == 'row_sparse'
+        is_sparse = weight.stype == 'row_sparse' and grad.stype == 'row_sparse'
         history = state
 
         if is_sparse:
@@ -1181,11 +1139,9 @@ class RMSProp(Optimizer):
     epsilon : float, optional
         Small value to avoid division by 0.
     centered : bool, optional
-        Flag to control which version of RMSProp to use.::
-
-            True: will use Graves's version of `RMSProp`,
-            False: will use Tieleman & Hinton's version of `RMSProp`.
-
+        Flag to control which version of RMSProp to use.
+        ``True`` will use Graves's version of `RMSProp`,
+        ``False`` will use Tieleman & Hinton's version of `RMSProp`.
     clip_weights : float, optional
         Clips weights into range ``[-clip_weights, clip_weights]``.
     """
@@ -1238,14 +1194,6 @@ class AdaDelta(Optimizer):
 
     This class implements AdaDelta, an optimizer described in  *ADADELTA: An adaptive
     learning rate method*, available at https://arxiv.org/abs/1212.5701.
-
-    This optimizer updates each weight by::
-
-        grad = clip(grad * rescale_grad + wd * weight, clip_gradient)
-        acc_grad = rho * acc_grad + (1. - rho) * grad * grad
-        delta = sqrt(acc_delta + epsilon) / sqrt(acc_grad + epsilon) * grad
-        acc_delta = rho * acc_delta + (1. - rho) * delta * delta
-        weight -= (delta + wd * weight)
 
     This optimizer accepts the following parameters in addition to those accepted
     by :class:`.Optimizer`.
@@ -1372,13 +1320,6 @@ class Adamax(Optimizer):
 
     It is a variant of Adam based on the infinity norm
     available at http://arxiv.org/abs/1412.6980 Section 7.
-
-    The optimizer updates the weight by::
-
-        grad = clip(grad * rescale_grad + wd * weight, clip_gradient)
-        m = beta1 * m_t + (1 - beta1) * grad
-        u = maximum(beta2 * u, abs(grad))
-        weight -= lr / (1 - beta1**t) * m / u
 
     This optimizer accepts the following parameters in addition to those accepted
     by :class:`.Optimizer`.

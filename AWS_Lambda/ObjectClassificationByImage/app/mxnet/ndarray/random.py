@@ -23,9 +23,8 @@ from . import _internal
 from .ndarray import NDArray
 
 
-__all__ = ['uniform', 'normal', 'randn', 'poisson', 'exponential', 'gamma',
-           'multinomial', 'negative_binomial', 'generalized_negative_binomial',
-           'shuffle']
+__all__ = ['uniform', 'normal', 'poisson', 'exponential', 'gamma', 'multinomial',
+           'negative_binomial', 'generalized_negative_binomial', 'shuffle']
 
 
 def _random_helper(random, sampler, params, shape, dtype, ctx, out, kwargs):
@@ -59,23 +58,23 @@ def uniform(low=0, high=1, shape=_Null, dtype=_Null, ctx=None, out=None, **kwarg
 
     Parameters
     ----------
-    low : float or NDArray, optional
+    low : float or NDArray
         Lower boundary of the output interval. All values generated will be
         greater than or equal to low. The default value is 0.
-    high : float or NDArray, optional
+    high : float or NDArray
         Upper boundary of the output interval. All values generated will be
         less than high. The default value is 1.0.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw. If shape is, e.g., `(m, n)` and `low` and
         `high` are scalars, output shape will be `(m, n)`. If `low` and `high`
         are NDArrays with shape, e.g., `(x, y)`, then output will have shape
         `(x, y, m, n)`, where `m*n` samples are drawn for each `[low, high)` pair.
-    dtype : {'float16', 'float32', 'float64'}, optional
+    dtype : {'float16','float32', 'float64'}
         Data type of output samples. Default is 'float32'
-    ctx : Context, optional
+    ctx : Context
         Device context of output. Default is current context. Overridden by
         `low.context` when `low` is an NDArray.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
 
 
@@ -111,21 +110,21 @@ def normal(loc=0, scale=1, shape=_Null, dtype=_Null, ctx=None, out=None, **kwarg
 
     Parameters
     ----------
-    loc : float or NDArray, optional
+    loc : float or NDArray
         Mean (centre) of the distribution.
-    scale : float or NDArray, optional
+    scale : float or NDArray
         Standard deviation (spread or width) of the distribution.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw. If shape is, e.g., `(m, n)` and `loc` and
         `scale` are scalars, output shape will be `(m, n)`. If `loc` and `scale`
         are NDArrays with shape, e.g., `(x, y)`, then output will have shape
         `(x, y, m, n)`, where `m*n` samples are drawn for each `[loc, scale)` pair.
-    dtype : {'float16', 'float32', 'float64'}, optional
+    dtype : {'float16','float32', 'float64'}
         Data type of output samples. Default is 'float32'
-    ctx : Context, optional
+    ctx : Context
         Device context of output. Default is current context. Overridden by
         `loc.context` when `loc` is an NDArray.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
 
 
@@ -152,58 +151,6 @@ def normal(loc=0, scale=1, shape=_Null, dtype=_Null, ctx=None, out=None, **kwarg
                           [loc, scale], shape, dtype, ctx, out, kwargs)
 
 
-def randn(*shape, **kwargs):
-    """Draw random samples from a normal (Gaussian) distribution.
-
-    Samples are distributed according to a normal distribution parametrized
-    by *loc* (mean) and *scale* (standard deviation).
-
-
-    Parameters
-    ----------
-    loc : float or NDArray
-        Mean (centre) of the distribution.
-    scale : float or NDArray
-        Standard deviation (spread or width) of the distribution.
-    shape : int or tuple of ints
-        The number of samples to draw. If shape is, e.g., `(m, n)` and `loc` and
-        `scale` are scalars, output shape will be `(m, n)`. If `loc` and `scale`
-        are NDArrays with shape, e.g., `(x, y)`, then output will have shape
-        `(x, y, m, n)`, where `m*n` samples are drawn for each `[loc, scale)` pair.
-    dtype : {'float16', 'float32', 'float64'}
-        Data type of output samples. Default is 'float32'
-    ctx : Context
-        Device context of output. Default is current context. Overridden by
-        `loc.context` when `loc` is an NDArray.
-    out : NDArray
-        Store output to an existing NDArray.
-
-
-    Examples
-    --------
-    >>> mx.nd.random.randn()
-    2.21220636
-    <NDArray 1 @cpu(0)>
-    >>> mx.nd.random.randn(2, 2)
-    [[-1.856082   -1.9768796 ]
-    [-0.20801921  0.2444218 ]]
-    <NDArray 2x2 @cpu(0)>
-    >>> mx.nd.random.randn(2, 3, loc=5, scale=1)
-    [[4.19962   4.8311777 5.936328 ]
-    [5.357444  5.7793283 3.9896927]]
-    <NDArray 2x3 @cpu(0)>
-    """
-    loc = kwargs.pop('loc', 0)
-    scale = kwargs.pop('scale', 1)
-    dtype = kwargs.pop('dtype', _Null)
-    ctx = kwargs.pop('ctx', None)
-    out = kwargs.pop('out', None)
-    assert isinstance(loc, (int, float))
-    assert isinstance(scale, (int, float))
-    return _random_helper(_internal._random_normal, _internal._sample_normal,
-                          [loc, scale], shape, dtype, ctx, out, kwargs)
-
-
 def poisson(lam=1, shape=_Null, dtype=_Null, ctx=None, out=None, **kwargs):
     """Draw random samples from a Poisson distribution.
 
@@ -212,19 +159,19 @@ def poisson(lam=1, shape=_Null, dtype=_Null, ctx=None, out=None, **kwargs):
 
     Parameters
     ----------
-    lam : float or NDArray, optional
+    lam : float or NDArray
         Expectation of interval, should be >= 0.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw. If shape is, e.g., `(m, n)` and `lam` is
         a scalar, output shape will be `(m, n)`. If `lam`
         is an NDArray with shape, e.g., `(x, y)`, then output will have shape
         `(x, y, m, n)`, where `m*n` samples are drawn for each entry in `lam`.
-    dtype : {'float16', 'float32', 'float64'}, optional
+    dtype : {'float16','float32', 'float64'}
         Data type of output samples. Default is 'float32'
-    ctx : Context, optional
+    ctx : Context
         Device context of output. Default is current context. Overridden by
         `lam.context` when `lam` is an NDArray.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
 
 
@@ -259,19 +206,19 @@ def exponential(scale=1, shape=_Null, dtype=_Null, ctx=None, out=None, **kwargs)
 
     Parameters
     ----------
-    scale : float or NDArray, optional
+    scale : float or NDArray
         The scale parameter, \beta = 1/\lambda.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw. If shape is, e.g., `(m, n)` and `scale` is
         a scalar, output shape will be `(m, n)`. If `scale`
         is an NDArray with shape, e.g., `(x, y)`, then output will have shape
         `(x, y, m, n)`, where `m*n` samples are drawn for each entry in `scale`.
-    dtype : {'float16', 'float32', 'float64'}, optional
+    dtype : {'float16','float32', 'float64'}
         Data type of output samples. Default is 'float32'
-    ctx : Context, optional
+    ctx : Context
         Device context of output. Default is current context. Overridden by
         `scale.context` when `scale` is an NDArray.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
 
 
@@ -302,22 +249,22 @@ def gamma(alpha=1, beta=1, shape=_Null, dtype=_Null, ctx=None, out=None, **kwarg
 
     Parameters
     ----------
-    alpha : float or NDArray, optional
+    alpha : float or NDArray
         The shape of the gamma distribution. Should be greater than zero.
-    beta : float or NDArray, optional
+    beta : float or NDArray
         The scale of the gamma distribution. Should be greater than zero.
         Default is equal to 1.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw. If shape is, e.g., `(m, n)` and `alpha` and
         `beta` are scalars, output shape will be `(m, n)`. If `alpha` and `beta`
         are NDArrays with shape, e.g., `(x, y)`, then output will have shape
         `(x, y, m, n)`, where `m*n` samples are drawn for each `[alpha, beta)` pair.
-    dtype : {'float16', 'float32', 'float64'}, optional
+    dtype : {'float16','float32', 'float64'}
         Data type of output samples. Default is 'float32'
-    ctx : Context, optional
+    ctx : Context
         Device context of output. Default is current context. Overridden by
         `alpha.context` when `alpha` is an NDArray.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
 
 
@@ -352,21 +299,21 @@ def negative_binomial(k=1, p=1, shape=_Null, dtype=_Null, ctx=None,
 
     Parameters
     ----------
-    k : float or NDArray, optional
+    k : float or NDArray
         Limit of unsuccessful experiments, > 0.
-    p : float or NDArray, optional
+    p : float or NDArray
         Failure probability in each experiment, >= 0 and <=1.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw. If shape is, e.g., `(m, n)` and `k` and
         `p` are scalars, output shape will be `(m, n)`. If `k` and `p`
         are NDArrays with shape, e.g., `(x, y)`, then output will have shape
         `(x, y, m, n)`, where `m*n` samples are drawn for each `[k, p)` pair.
-    dtype : {'float16', 'float32', 'float64'}, optional
+    dtype : {'float16','float32', 'float64'}
         Data type of output samples. Default is 'float32'
-    ctx : Context, optional
+    ctx : Context
         Device context of output. Default is current context. Overridden by
         `k.context` when `k` is an NDArray.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
 
 
@@ -403,21 +350,21 @@ def generalized_negative_binomial(mu=1, alpha=1, shape=_Null, dtype=_Null, ctx=N
 
     Parameters
     ----------
-    mu : float or NDArray, optional
+    mu : float or NDArray
         Mean of the negative binomial distribution.
-    alpha : float or NDArray, optional
+    alpha : float or NDArray
         Alpha (dispersion) parameter of the negative binomial distribution.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw. If shape is, e.g., `(m, n)` and `mu` and
         `alpha` are scalars, output shape will be `(m, n)`. If `mu` and `alpha`
         are NDArrays with shape, e.g., `(x, y)`, then output will have shape
         `(x, y, m, n)`, where `m*n` samples are drawn for each `[mu, alpha)` pair.
-    dtype : {'float16', 'float32', 'float64'}, optional
+    dtype : {'float16','float32', 'float64'}
         Data type of output samples. Default is 'float32'
-    ctx : Context, optional
+    ctx : Context
         Device context of output. Default is current context. Overridden by
         `mu.context` when `mu` is an NDArray.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
 
 
@@ -442,7 +389,7 @@ def generalized_negative_binomial(mu=1, alpha=1, shape=_Null, dtype=_Null, ctx=N
                           [mu, alpha], shape, dtype, ctx, out, kwargs)
 
 
-def multinomial(data, shape=_Null, get_prob=False, out=None, dtype='int32', **kwargs):
+def multinomial(data, shape=_Null, get_prob=False, out=None, **kwargs):
     """Concurrent sampling from multiple multinomial distributions.
 
     .. note:: The input distribution must be normalized, i.e. `data` must sum to
@@ -455,19 +402,16 @@ def multinomial(data, shape=_Null, get_prob=False, out=None, dtype='int32', **kw
         `k` is the number of possible outcomes of each multinomial distribution.
         For example, data with shape `(m, n, k)` specifies `m*n` multinomial
         distributions each with `k` possible outcomes.
-    shape : int or tuple of ints, optional
+    shape : int or tuple of ints
         The number of samples to draw from each distribution. If shape is empty
         one sample will be drawn from each distribution.
-    get_prob : bool, optional
+    get_prob : bool
         If true, a second array containing log likelihood of the drawn
         samples will also be returned.
         This is usually used for reinforcement learning, where you can provide
         reward as head gradient w.r.t. this array to estimate gradient.
-    out : NDArray, optional
+    out : NDArray
         Store output to an existing NDArray.
-    dtype : str or numpy.dtype, optional
-        Data type of the sample output array. The default is int32.
-        Note that the data type of the log likelihood array is the same with that of `data`.
 
     Examples
     --------
@@ -485,7 +429,7 @@ def multinomial(data, shape=_Null, get_prob=False, out=None, dtype='int32', **kw
     [-1.20397282 -1.60943794]
     <NDArray 2 @cpu(0)>
     """
-    return _internal._sample_multinomial(data, shape, get_prob, out=out, dtype=dtype, **kwargs)
+    return _internal._sample_multinomial(data, shape, get_prob, out=out, **kwargs)
 
 
 def shuffle(data, **kwargs):
@@ -500,7 +444,7 @@ def shuffle(data, **kwargs):
     ----------
     data : NDArray
         Input data array.
-    out : NDArray, optional
+    out : NDArray
         Array to store the result.
 
     Examples
@@ -518,45 +462,3 @@ def shuffle(data, **kwargs):
     <NDArray 2x3 @cpu(0)>
     """
     return _internal._shuffle(data, **kwargs)
-
-
-def randint(low, high, shape=_Null, dtype=_Null, ctx=None, out=None, **kwargs):
-    """Draw random samples from a discrete uniform distribution.
-
-    Samples are uniformly distributed over the half-open interval *[low, high)*
-    (includes *low*, but excludes *high*).
-
-    Parameters
-    ----------
-    low : int, required
-        Lower boundary of the output interval. All values generated will be
-        greater than or equal to low.
-    high : int, required
-        Upper boundary of the output interval. All values generated will be
-        less than high.
-    shape : int or tuple of ints, optional
-        The number of samples to draw. If shape is, e.g., `(m, n)` and `low` and
-        `high` are scalars, output shape will be `(m, n)`.
-    dtype : {'int32', 'int64'}, optional
-        Data type of output samples. Default is 'int32'
-    ctx : Context, optional
-        Device context of output. Default is current context. Overridden by
-        `low.context` when `low` is an NDArray.
-    out : NDArray, optional
-        Store output to an existing NDArray.
-
-
-    Examples
-    --------
-    >>> mx.nd.random.randint(5, 100)
-    [ 90]
-    <NDArray 1 @cpu(0)
-    >>> mx.nd.random.randint(-10, 2, ctx=mx.gpu(0))
-    [ -8]
-    <NDArray 1 @gpu(0)>
-    >>> mx.nd.random.randint(-10, 10, shape=(2,))
-    [ -5  4]
-    <NDArray 2 @cpu(0)>
-    """
-    return _random_helper(_internal._random_randint, None,
-                          [low, high], shape, dtype, ctx, out, kwargs)

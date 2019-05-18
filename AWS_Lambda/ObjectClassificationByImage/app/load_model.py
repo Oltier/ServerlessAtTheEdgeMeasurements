@@ -22,7 +22,7 @@ class Model(object):
         reshape = (224, 224)
 
         nparr = np.frombuffer(img_str, np.uint8)
-        image = cv2.imdecode(nparr, cv2.CV_LOAD_IMAGE_COLOR)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         N = 5
         topN = []

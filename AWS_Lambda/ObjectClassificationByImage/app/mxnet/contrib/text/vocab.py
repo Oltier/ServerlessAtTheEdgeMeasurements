@@ -63,8 +63,12 @@ class Vocabulary(object):
         `reserved_tokens` must be of the same hashable type. Examples: str, int, and tuple.
 
 
-    Attributes
+    Properties
     ----------
+    token_to_idx : dict mapping str to int
+        A dict mapping each token to its index integer.
+    idx_to_token : list of strs
+        A list of indexed tokens where the list indices and the token indices are aligned.
     unknown_token : hashable object
         The representation for any unknown token. In other words, any unknown token will be indexed
         as the same representation.
@@ -139,16 +143,10 @@ class Vocabulary(object):
 
     @property
     def token_to_idx(self):
-        """
-        dict mapping str to int: A dict mapping each token to its index integer.
-        """
         return self._token_to_idx
 
     @property
     def idx_to_token(self):
-        """
-        list of strs:  A list of indexed tokens where the list indices and the token indices are aligned.
-        """
         return self._idx_to_token
 
     @property

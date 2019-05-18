@@ -34,10 +34,10 @@ import numpy as _numpy
 
 from ..attribute import AttrScope
 from ..base import _LIB, numeric_types, c_array, c_array_buf, c_str, c_str_array, c_handle_array
-from ..base import mx_uint, py_str, string_types, integer_types
+from ..base import mx_uint, py_str, string_types
 from ..base import NDArrayHandle, ExecutorHandle, SymbolHandle
 from ..base import check_call, MXNetError, NotImplementedForSymbol
-from ..context import Context, current_context
+from ..context import Context
 from ..ndarray import NDArray, _DTYPE_NP_TO_MX, _DTYPE_MX_TO_NP, _GRAD_REQ_MAP
 from ..ndarray.ndarray import _STORAGE_TYPE_STR_TO_ID
 from ..ndarray import _ndarray_cls
@@ -47,8 +47,7 @@ from . import op
 from ._internal import SymbolBase, _set_symbol_class
 
 __all__ = ["Symbol", "var", "Variable", "Group", "load", "load_json",
-           "pow", "maximum", "minimum", "hypot", "eye", "zeros", "ones", "full", "arange",
-           "histogram"]
+           "pow", "maximum", "minimum", "hypot", "eye", "zeros", "ones", "full", "arange"]
 
 
 class Symbol(SymbolBase):
@@ -103,11 +102,6 @@ class Symbol(SymbolBase):
             return _internal._PlusScalar(self, scalar=other)
         else:
             raise TypeError('type %s not supported' % str(type(other)))
-
-    def __bool__(self):
-        raise NotImplementedForSymbol(self.__bool__, 'bool')
-
-    __nonzero__ = __bool__
 
     def __iadd__(self, other):
         raise NotImplementedForSymbol(self.__iadd__, '+=', other, 1)
@@ -1260,12 +1254,9 @@ class Symbol(SymbolBase):
             if len(args) != len(arg_names):
                 raise ValueError('Length of %s does not match the number of arguments' % arg_key)
             for narr in args:
-                if narr is None and allow_missing:
-                    arg_handles.append(None)
-                elif not isinstance(narr, NDArray):
+                if not isinstance(narr, NDArray):
                     raise TypeError('Only accept list of NDArrays or dict of str to NDArray')
-                else:
-                    arg_handles.append(narr.handle)
+                arg_handles.append(narr.handle)
             arg_arrays = args
         elif isinstance(args, dict):
             for name in arg_names:
@@ -1285,7 +1276,6 @@ class Symbol(SymbolBase):
             raise TypeError('Only accept list of NDArrays or dict of str to NDArray')
         return c_array(NDArrayHandle, arg_handles), arg_arrays
 
-    # pylint: disable=too-many-locals
     def simple_bind(self, ctx, grad_req='write', type_dict=None, stype_dict=None,
                     group2ctx=None, shared_arg_names=None, shared_exec=None,
                     shared_buffer=None, **kwargs):
@@ -1347,7 +1337,7 @@ class Symbol(SymbolBase):
         shared_buffer : Dict of string to `NDArray`
             The dict mapping argument names to the `NDArray` that can be reused for initializing
             the current executor. This buffer will be checked for reuse if one argument name
-            of the current executor is not found in `shared_arg_names`. The `NDArray` s are
+            of the current executor is not found in `shared_arg_names`. The `NDArray`s are
             expected have default storage type.
 
         kwargs : Dict of str->shape
@@ -1772,7 +1762,7 @@ class Symbol(SymbolBase):
         the result will be a list with one element.
         """
         if ctx is None:
-            ctx = current_context()
+            ctx = Context.default_ctx
         return self.bind(ctx, kwargs).forward()
 
     def reshape(self, *args, **kwargs):
@@ -1983,22 +1973,6 @@ class Symbol(SymbolBase):
         """
         return op.flatten(self, *args, **kwargs)
 
-    def shape_array(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`shape_array`.
-
-        The arguments are the same as for :py:func:`shape_op`, with
-        this array as data.
-        """
-        return op.shape_array(self, *args, **kwargs)
-
-    def size_array(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`size_array`.
-
-        The arguments are the same as for :py:func:`size_array`, with
-        this array as data.
-        """
-        return op.size_array(self, *args, **kwargs)
-
     def expand_dims(self, *args, **kwargs):
         """Convenience fluent method for :py:func:`expand_dims`.
 
@@ -2014,14 +1988,6 @@ class Symbol(SymbolBase):
         this array as data.
         """
         return op.broadcast_to(self, *args, **kwargs)
-
-    def broadcast_like(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`broadcast_like`.
-
-        The arguments are the same as for :py:func:`broadcast_like`, with
-        this array as data.
-        """
-        return op.broadcast_like(self, *args, **kwargs)
 
     def tile(self, *args, **kwargs):
         """Convenience fluent method for :py:func:`tile`.
@@ -2046,30 +2012,6 @@ class Symbol(SymbolBase):
         this array as data.
         """
         return op.flip(self, *args, **kwargs)
-
-    def depth_to_space(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`depth_to_space`.
-
-        The arguments are the same as for :py:func:`depth_to_space`, with
-        this array as data.
-        """
-        return op.depth_to_space(self, *args, **kwargs)
-
-    def space_to_depth(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`space_to_depth`.
-
-        The arguments are the same as for :py:func:`space_to_depth`, with
-        this array as data.
-        """
-        return op.space_to_depth(self, *args, **kwargs)
-
-    def diag(self, k=0, **kwargs):
-        """Convenience fluent method for :py:func:`diag`.
-
-        The arguments are the same as for :py:func:`diag`, with
-        this array as data.
-        """
-        return op.diag(self, k, **kwargs)
 
     def sum(self, *args, **kwargs):
         """Convenience fluent method for :py:func:`sum`.
@@ -2423,14 +2365,6 @@ class Symbol(SymbolBase):
         """
         return op.log_softmax(self, *args, **kwargs)
 
-    def softmin(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`softmin`.
-
-        The arguments are the same as for :py:func:`softmin`, with
-        this array as data.
-        """
-        return op.softmin(self, *args, **kwargs)
-
     def squeeze(self, *args, **kwargs):
         """Convenience fluent method for :py:func:`squeeze`.
 
@@ -2438,23 +2372,6 @@ class Symbol(SymbolBase):
         this array as data.
         """
         return op.squeeze(self, *args, **kwargs)
-
-    def get_backend_symbol(self, backend):
-        """Return symbol for target backend.
-
-        Parameters
-        ----------
-        backend : str
-            The backend names.
-
-        Returns
-        -------
-        out : Symbol
-            The created Symbol for target backend.
-        """
-        out = SymbolHandle()
-        check_call(_LIB.MXGenBackendSubgraph(self.handle, c_str(backend), ctypes.byref(out)))
-        return Symbol(out)
 
     def wait_to_read(self):
         raise NotImplementedForSymbol(self.wait_to_read, None)
@@ -2526,9 +2443,7 @@ def var(name, attr=None, shape=None, lr_mult=None, wd_mult=None, dtype=None,
     handle = SymbolHandle()
     check_call(_LIB.MXSymbolCreateVariable(c_str(name), ctypes.byref(handle)))
     ret = Symbol(handle)
-    if not hasattr(AttrScope._current, "value"):
-        AttrScope._current.value = AttrScope()
-    attr = AttrScope._current.value.get(attr)
+    attr = AttrScope.current.get(attr)
     attr = {} if attr is None else attr
     if shape is not None:
         attr['__shape__'] = str(shape)
@@ -2579,7 +2494,7 @@ def Group(symbols):
     sym : Symbol
         A group symbol.
      """
-    if not symbols or any(not isinstance(sym, Symbol) for sym in symbols):
+    if any(not isinstance(sym, Symbol) for sym in symbols):
         raise TypeError('Expected a list of symbols as input')
     handle = SymbolHandle()
     check_call(_LIB.MXSymbolCreateGroup(
@@ -2826,8 +2741,8 @@ def hypot(left, right):
         raise TypeError('types (%s, %s) not supported' % (str(type(left)), str(type(right))))
 
 def eye(N, M=0, k=0, dtype=None, **kwargs):
-    """Returns a new symbol of 2-D shpae, filled with ones on the diagonal and zeros elsewhere.
-
+    """Returns a new symbol of 2-D shpae, filled with ones on the diagonal
+       and zeros elsewhere.
     Parameters
     ----------
     N: int
@@ -2840,7 +2755,6 @@ def eye(N, M=0, k=0, dtype=None, **kwargs):
         and a negative value to a lower diagonal.
     dtype : str or numpy.dtype, optional
         The value type of the inner value, default to ``np.float32``.
-
     Returns
     -------
     out : Symbol
@@ -2912,7 +2826,7 @@ def full(shape, val, dtype=None, **kwargs):
     return _internal._full(shape=shape, dtype=dtype, value=float(val), **kwargs)
 
 # pylint: disable=redefined-outer-name
-def arange(start, stop=None, step=1.0, repeat=1, infer_range=False, name=None, dtype=None):
+def arange(start, stop=None, step=1.0, repeat=1, name=None, dtype=None):
     """Returns evenly spaced values within a given interval.
 
     Parameters
@@ -2926,9 +2840,6 @@ def arange(start, stop=None, step=1.0, repeat=1, infer_range=False, name=None, d
     repeat : int, optional
         "The repeating time of all elements.
         E.g repeat=3, the element a will be repeated three times --> a, a, a.
-    infer_range : boolean, optional
-        When set to True, infer the stop position from the start, step,
-        repeat, and output tensor size.
     dtype : str or numpy.dtype, optional
         The value type of the inner value, default to ``np.float32``.
 
@@ -2940,31 +2851,6 @@ def arange(start, stop=None, step=1.0, repeat=1, infer_range=False, name=None, d
     if dtype is None:
         dtype = _numpy.float32
     return _internal._arange(start=start, stop=stop, step=step, repeat=repeat,
-                             infer_range=infer_range, name=name, dtype=dtype)
-
-def histogram(a, bins=10, range=None, **kwargs):
-    """Compute the histogram of the input data.
-
-    Parameters
-    ----------
-    a : NDArray
-        Input data. The histogram is computed over the flattened array.
-    bins : int or sequence of scalars
-        If bins is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If bins is a sequence, it defines the bin edges,
-        including the rightmost edge, allowing for non-uniform bin widths.
-    range : (float, float), required if bins is an integer
-        The lower and upper range of the bins. If not provided, range is simply (a.min(), a.max()).
-        Values outside the range are ignored. The first element of the range must be less than or
-        equal to the second. range affects the automatic bin computation as well, the range will
-        be equally divided by the number of bins.
-    """
-    if isinstance(bins, Symbol):
-        return _internal._histogram(data=a, bins=bins, **kwargs)
-    elif isinstance(bins, integer_types):
-        if range is None:
-            raise ValueError("null range is not supported in symbol mode")
-        return _internal._histogram(data=a, bin_cnt=bins, range=range, **kwargs)
-    raise ValueError("bins argument should be either an integer or an NDArray")
+                             name=name, dtype=dtype)
 
 _set_symbol_class(Symbol)

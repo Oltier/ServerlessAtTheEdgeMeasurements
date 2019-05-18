@@ -20,7 +20,7 @@
 """Dataset sampler."""
 __all__ = ['Sampler', 'SequentialSampler', 'RandomSampler', 'BatchSampler']
 
-import numpy as np
+import random
 
 class Sampler(object):
     """Base class for samplers.
@@ -65,8 +65,8 @@ class RandomSampler(Sampler):
         self._length = length
 
     def __iter__(self):
-        indices = np.arange(self._length)
-        np.random.shuffle(indices)
+        indices = list(range(self._length))
+        random.shuffle(indices)
         return iter(indices)
 
     def __len__(self):

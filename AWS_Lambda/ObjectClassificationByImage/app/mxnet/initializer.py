@@ -32,11 +32,10 @@ from . import ndarray
 
 # inherit str for backward compatibility
 class InitDesc(str):
-    """
-    Descriptor for the initialization pattern.
+    """Descriptor for the initialization pattern.
 
-    Parameters
-    ----------
+    Parameter
+    ---------
     name : str
         Name of variable.
     attrs : dict of str to str
@@ -68,7 +67,7 @@ class Initializer(object):
         print_func : function
             A function that computes statistics of initialized arrays.
             Takes an `NDArray` and returns an `str`. Defaults to mean
-            absolute value str((abs(x)/size(x)).asscalar()).
+            absolute value str((|x|/size(x)).asscalar()).
         """
         self._verbose = verbose
         if print_func is None:
@@ -153,12 +152,6 @@ class Initializer(object):
             elif desc.endswith('beta'):
                 self._init_beta(desc, arr)
                 self._verbose_print(desc, 'beta', arr)
-            elif desc.endswith('min'):
-                self._init_zero(desc, arr)
-                self._verbose_print(desc, 'min', arr)
-            elif desc.endswith('max'):
-                self._init_one(desc, arr)
-                self._verbose_print(desc, 'max', arr)
             else:
                 self._init_default(desc, arr)
 
@@ -168,7 +161,7 @@ class Initializer(object):
         Parameters
         ----------
         name : str
-            Name of corresponding NDArray.
+            Name of corrosponding NDArray.
 
         arr : NDArray
             NDArray to be initialized.
@@ -203,10 +196,6 @@ class Initializer(object):
             self._init_zero(name, arr)
         elif name.endswith("moving_avg"):
             self._init_zero(name, arr)
-        elif name.endswith('min'):
-            self._init_zero(name, arr)
-        elif name.endswith('max'):
-            self._init_one(name, arr)
         else:
             self._init_default(name, arr)
 
@@ -435,14 +424,12 @@ class One(Initializer):
 
 @register
 class Constant(Initializer):
-    """Initializes the weights to a given value.
-    The value passed in can be a scalar or a NDarray that matches the shape
-    of the parameter to be set.
+    """Initializes the weights to a scalar value.
 
     Parameters
     ----------
-    value : float, NDArray
-        Value to set.
+    value : float
+        Fill value.
     """
     def __init__(self, value):
         super(Constant, self).__init__(value=value)
@@ -664,7 +651,7 @@ class Bilinear(Initializer):
 
 @register
 class LSTMBias(Initializer):
-    """Initialize all biases of an LSTMCell to 0.0 except for
+    """Initialize all bias of an LSTMCell to 0.0 except for
     the forget gate whose bias is set to custom value.
 
     Parameters
@@ -708,7 +695,7 @@ class FusedRNN(Initializer):
     def __init__(self, init, num_hidden, num_layers, mode, bidirectional=False, forget_bias=1.0):
         if isinstance(init, string_types):
             klass, kwargs = json.loads(init)
-            init = registry._REGISTRY[klass.lower()](**kwargs)
+            init = _INITIALIZER_REGISTRY[klass.lower()](**kwargs)
         super(FusedRNN, self).__init__(init=init.dumps() if init is not None else None,
                                        num_hidden=num_hidden, num_layers=num_layers, mode=mode,
                                        bidirectional=bidirectional, forget_bias=forget_bias)

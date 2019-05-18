@@ -22,7 +22,7 @@ from __future__ import absolute_import as _abs
 from .... import symbol
 from .... import ndarray as nd
 from ....base import string_types
-from ._import_helper import _convert_map as convert_map
+from .import_helper import _convert_map as convert_map
 
 class GraphProto(object): # pylint: disable=too-few-public-methods
     """A helper class for handling mxnet symbol copying from pb2.GraphProto.
@@ -33,9 +33,6 @@ class GraphProto(object): # pylint: disable=too-few-public-methods
         self._params = {}
         self._num_input = 0
         self._num_param = 0
-        self.aux_dict = {}
-        self.arg_dict = {}
-        self.model_metadata = {}
 
     def _convert_operator(self, node_name, op_name, attrs, inputs):
         """Convert from onnx operator to mxnet operator.
@@ -87,8 +84,6 @@ class GraphProto(object): # pylint: disable=too-few-public-methods
         params : dict
             A dict of name: nd.array pairs, used as pretrained weights
         """
-        #get input, output shapes
-        self.model_metadata = self.get_graph_metadata(graph)
         # parse network inputs, aka parameters
         for init_tensor in graph.initializer:
             if not init_tensor.name.strip():
@@ -103,6 +98,10 @@ class GraphProto(object): # pylint: disable=too-few-public-methods
                                                       shape=self._params[i.name].shape)
             else:
                 self._nodes[i.name] = symbol.Variable(name=i.name)
+
+        # For storing arg  and aux params for the graph.
+        auxDict = {}
+        argDict = {}
 
         # constructing nodes, nodes are stored as directed acyclic graph
         # converting NodeProto message
@@ -120,10 +119,10 @@ class GraphProto(object): # pylint: disable=too-few-public-methods
             # splitting params into args and aux params
             for args in mxnet_sym.list_arguments():
                 if args in self._params:
-                    self.arg_dict.update({args: nd.array(self._params[args])})
+                    argDict.update({args: nd.array(self._params[args])})
             for aux in mxnet_sym.list_auxiliary_states():
                 if aux in self._params:
-                    self.aux_dict.update({aux: nd.array(self._params[aux])})
+                    auxDict.update({aux: nd.array(self._params[aux])})
 
         # now return the outputs
         out = [self._nodes[i.name] for i in graph.output]
@@ -131,63 +130,7 @@ class GraphProto(object): # pylint: disable=too-few-public-methods
             out = symbol.Group(out)
         else:
             out = out[0]
-        return out, self.arg_dict, self.aux_dict
-
-    def get_graph_metadata(self, graph):
-        """
-        Get the model metadata from a given onnx graph.
-        """
-        _params = set()
-        for tensor_vals in graph.initializer:
-            _params.add(tensor_vals.name)
-
-        input_data = []
-        for graph_input in graph.input:
-            if graph_input.name not in _params:
-                shape = [val.dim_value for val in graph_input.type.tensor_type.shape.dim]
-                input_data.append((graph_input.name, tuple(shape)))
-
-        output_data = []
-        for graph_out in graph.output:
-            shape = [val.dim_value for val in graph_out.type.tensor_type.shape.dim]
-            output_data.append((graph_out.name, tuple(shape)))
-        metadata = {'input_tensor_data' : input_data,
-                    'output_tensor_data' : output_data
-                   }
-        return metadata
-
-    def graph_to_gluon(self, graph, ctx):
-        """Construct SymbolBlock from onnx graph.
-
-        Parameters
-        ----------
-        graph : onnx protobuf object
-            The loaded onnx graph
-        ctx : Context or list of Context
-            Loads the model into one or many context(s).
-
-        Returns
-        -------
-        sym_block :gluon.nn.SymbolBlock
-            The returned gluon SymbolBlock
-        """
-        sym, arg_params, aux_params = self.from_onnx(graph)
-        metadata = self.get_graph_metadata(graph)
-        data_names = [input_tensor[0] for input_tensor in metadata['input_tensor_data']]
-        data_inputs = [symbol.var(data_name) for data_name in data_names]
-
-        from ....gluon import SymbolBlock
-        net = SymbolBlock(outputs=sym, inputs=data_inputs)
-        net_params = net.collect_params()
-        for param in arg_params:
-            if param in net_params:
-                net_params[param].shape = arg_params[param].shape
-                net_params[param]._load_init(arg_params[param], ctx=ctx)
-        for param in aux_params:
-            if param in net_params:
-                net_params[param].shape = aux_params[param].shape
-                net_params[param]._load_init(aux_params[param], ctx=ctx)
-        return net
+        return out, argDict, auxDict
 
     def _parse_array(self, tensor_proto):
         """Grab data in TensorProto and convert to numpy array."""

@@ -14,98 +14,16 @@ def ElementWiseSum(*args, **kwargs):
     The storage type of ``add_n`` output depends on storage types of inputs
 
     - add_n(row_sparse, row_sparse, ..) = row_sparse
-    - add_n(default, csr, default) = default
-    - add_n(any input combinations longer than 4 (>4) with at least one default type) = default
-    - otherwise, ``add_n`` falls all inputs back to default storage and generates default storage
+    - otherwise, ``add_n`` generates output with default storage
 
 
 
-    Defined in src/operator/tensor/elemwise_sum.cc:L156
+    Defined in src/operator/tensor/elemwise_sum.cc:L150
 
     Parameters
     ----------
     args : NDArray[]
         Positional input arguments
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def Embedding(data=None, weight=None, input_dim=_Null, output_dim=_Null, dtype=_Null, sparse_grad=_Null, out=None, name=None, **kwargs):
-    r"""Maps integer indices to vector representations (embeddings).
-
-    This operator maps words to real-valued vectors in a high-dimensional space,
-    called word embeddings. These embeddings can capture semantic and syntactic properties of the words.
-    For example, it has been noted that in the learned embedding spaces, similar words tend
-    to be close to each other and dissimilar words far apart.
-
-    For an input array of shape (d1, ..., dK),
-    the shape of an output array is (d1, ..., dK, output_dim).
-    All the input values should be integers in the range [0, input_dim).
-
-    If the input_dim is ip0 and output_dim is op0, then shape of the embedding weight matrix must be
-    (ip0, op0).
-
-    By default, if any index mentioned is too large, it is replaced by the index that addresses
-    the last vector in an embedding matrix.
-
-    Examples::
-
-      input_dim = 4
-      output_dim = 5
-
-      // Each row in weight matrix y represents a word. So, y = (w0,w1,w2,w3)
-      y = [[  0.,   1.,   2.,   3.,   4.],
-           [  5.,   6.,   7.,   8.,   9.],
-           [ 10.,  11.,  12.,  13.,  14.],
-           [ 15.,  16.,  17.,  18.,  19.]]
-
-      // Input array x represents n-grams(2-gram). So, x = [(w1,w3), (w0,w2)]
-      x = [[ 1.,  3.],
-           [ 0.,  2.]]
-
-      // Mapped input x to its vector representation y.
-      Embedding(x, y, 4, 5) = [[[  5.,   6.,   7.,   8.,   9.],
-                                [ 15.,  16.,  17.,  18.,  19.]],
-
-                               [[  0.,   1.,   2.,   3.,   4.],
-                                [ 10.,  11.,  12.,  13.,  14.]]]
-
-
-    The storage type of weight can be either row_sparse or default.
-
-    .. Note::
-
-        If "sparse_grad" is set to True, the storage type of gradient w.r.t weights will be
-        "row_sparse". Only a subset of optimizers support sparse gradients, including SGD, AdaGrad
-        and Adam. Note that by default lazy updates is turned on, which may perform differently
-        from standard updates. For more details, please check the Optimization API at:
-        https://mxnet.incubator.apache.org/api/python/optimization/optimization.html
-
-
-
-    Defined in src/operator/tensor/indexing_op.cc:L519
-
-    Parameters
-    ----------
-    data : NDArray
-        The input array to the embedding operator.
-    weight : NDArray
-        The embedding weight matrix.
-    input_dim : int, required
-        Vocabulary size of the input indices.
-    output_dim : int, required
-        Dimension of the embedding vectors.
-    dtype : {'float16', 'float32', 'float64', 'int32', 'int64', 'int8', 'uint8'},optional, default='float32'
-        Data type of weight.
-    sparse_grad : boolean, optional, default=0
-        Compute row sparse gradient in the backward calculation. If set to True, the grad's storage type is row_sparse.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -138,19 +56,13 @@ def FullyConnected(data=None, weight=None, bias=None, num_hidden=_Null, no_bias=
 
     If ``no_bias`` is set to be true, then the ``bias`` term is ignored.
 
-    .. Note::
-
-        The sparse support for FullyConnected is limited to forward evaluation with `row_sparse`
-        weight and bias, where the length of `weight.indices` and `bias.indices` must be equal
-        to `num_hidden`. This could be useful for model inference with `row_sparse` weights
-        trained with importance sampling or noise contrastive estimation.
-
-        To compute linear transformation with 'csr' sparse data, sparse.dot is recommended instead
-        of sparse.FullyConnected.
+    Note that the operator also supports forward computation with `row_sparse` weight and bias,
+    where the length of `weight.indices` and `bias.indices` must be equal to `num_hidden`.
+    This could be used for model inference with `row_sparse` weights trained with `SparseEmbedding`.
 
 
 
-    Defined in src/operator/nn/fully_connected.cc:L271
+    Defined in src/operator/nn/fully_connected.cc:L254
 
     Parameters
     ----------
@@ -238,16 +150,12 @@ def LogisticRegressionOutput(data=None, label=None, grad_scale=_Null, out=None, 
     - LogisticRegressionOutput(default, default) = default
     - LogisticRegressionOutput(default, csr) = default
 
-    The loss function used is the Binary Cross Entropy Loss:
-
-    :math:`-{(y\log(p) + (1 - y)\log(1 - p))}`
-
-    Where `y` is the ground truth probability of positive outcome for a given example, and `p` the probability predicted by the model. By default, gradients of this loss function are scaled by factor `1/m`, where m is the number of regression outputs of a training example.
+    By default, gradients of this loss function are scaled by factor `1/m`, where m is the number of regression outputs of a training example.
     The parameter `grad_scale` can be used to change this scale to `grad_scale/m`.
 
 
 
-    Defined in src/operator/regression_output.cc:L152
+    Defined in src/operator/regression_output.cc:L148
 
     Parameters
     ----------
@@ -323,11 +231,10 @@ def abs(data=None, out=None, name=None, **kwargs):
 
        - abs(default) = default
        - abs(row_sparse) = row_sparse
-       - abs(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L662
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L460
 
     Parameters
     ----------
@@ -360,7 +267,7 @@ def adagrad_update(weight=None, grad=None, history=None, lr=_Null, epsilon=_Null
 
 
 
-    Defined in src/operator/optimizer_op.cc:L665
+    Defined in src/operator/optimizer_op.cc:L624
 
     Parameters
     ----------
@@ -391,7 +298,7 @@ def adagrad_update(weight=None, grad=None, history=None, lr=_Null, epsilon=_Null
     """
     return (0,)
 
-def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Null, beta2=_Null, epsilon=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
+def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Null, beta2=_Null, epsilon=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
     r"""Update function for Adam optimizer. Adam is seen as a generalization
     of AdaGrad.
 
@@ -411,8 +318,7 @@ def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Nu
      v = beta2*v + (1-beta2)*(grad**2)
      w += - learning_rate * m / (sqrt(v) + epsilon)
 
-    However, if grad's storage type is ``row_sparse``, ``lazy_update`` is True and the storage
-    type of weight is the same as those of m and v,
+    If w, m and v are all of ``row_sparse`` storage type,
     only the row slices whose indices appear in grad.indices are updated (for w, m and v)::
 
      for row in grad.indices:
@@ -422,7 +328,7 @@ def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Nu
 
 
 
-    Defined in src/operator/optimizer_op.cc:L495
+    Defined in src/operator/optimizer_op.cc:L454
 
     Parameters
     ----------
@@ -448,8 +354,6 @@ def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Nu
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse and all of w, m and v have the same stype
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -472,13 +376,11 @@ def add_n(*args, **kwargs):
     The storage type of ``add_n`` output depends on storage types of inputs
 
     - add_n(row_sparse, row_sparse, ..) = row_sparse
-    - add_n(default, csr, default) = default
-    - add_n(any input combinations longer than 4 (>4) with at least one default type) = default
-    - otherwise, ``add_n`` falls all inputs back to default storage and generates default storage
+    - otherwise, ``add_n`` generates output with default storage
 
 
 
-    Defined in src/operator/tensor/elemwise_sum.cc:L156
+    Defined in src/operator/tensor/elemwise_sum.cc:L150
 
     Parameters
     ----------
@@ -563,7 +465,6 @@ def arcsin(data=None, out=None, name=None, **kwargs):
 
        - arcsin(default) = default
        - arcsin(row_sparse) = row_sparse
-       - arcsin(csr) = csr
 
 
 
@@ -592,7 +493,6 @@ def arcsinh(data=None, out=None, name=None, **kwargs):
 
        - arcsinh(default) = default
        - arcsinh(row_sparse) = row_sparse
-       - arcsinh(csr) = csr
 
 
 
@@ -625,7 +525,6 @@ def arctan(data=None, out=None, name=None, **kwargs):
 
        - arctan(default) = default
        - arctan(row_sparse) = row_sparse
-       - arctan(csr) = csr
 
 
 
@@ -654,7 +553,6 @@ def arctanh(data=None, out=None, name=None, **kwargs):
 
        - arctanh(default) = default
        - arctanh(row_sparse) = row_sparse
-       - arctanh(csr) = csr
 
 
 
@@ -664,264 +562,6 @@ def arctanh(data=None, out=None, name=None, **kwargs):
     ----------
     data : NDArray
         The input array.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_add(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise sum of the input arrays with broadcasting.
-
-    `broadcast_plus` is an alias to the function `broadcast_add`.
-
-    Example::
-
-       x = [[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]]
-
-       y = [[ 0.],
-            [ 1.]]
-
-       broadcast_add(x, y) = [[ 1.,  1.,  1.],
-                              [ 2.,  2.,  2.]]
-
-       broadcast_plus(x, y) = [[ 1.,  1.,  1.],
-                               [ 2.,  2.,  2.]]
-
-    Supported sparse operations:
-
-       broadcast_add(csr, dense(1D)) = dense
-       broadcast_add(dense(1D), csr) = dense
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L58
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_div(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise division of the input arrays with broadcasting.
-
-    Example::
-
-       x = [[ 6.,  6.,  6.],
-            [ 6.,  6.,  6.]]
-
-       y = [[ 2.],
-            [ 3.]]
-
-       broadcast_div(x, y) = [[ 3.,  3.,  3.],
-                              [ 2.,  2.,  2.]]
-
-    Supported sparse operations:
-
-       broadcast_div(csr, dense(1D)) = csr
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L187
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_minus(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise difference of the input arrays with broadcasting.
-
-    `broadcast_minus` is an alias to the function `broadcast_sub`.
-
-    Example::
-
-       x = [[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]]
-
-       y = [[ 0.],
-            [ 1.]]
-
-       broadcast_sub(x, y) = [[ 1.,  1.,  1.],
-                              [ 0.,  0.,  0.]]
-
-       broadcast_minus(x, y) = [[ 1.,  1.,  1.],
-                                [ 0.,  0.,  0.]]
-
-    Supported sparse operations:
-
-       broadcast_sub/minus(csr, dense(1D)) = dense
-       broadcast_sub/minus(dense(1D), csr) = dense
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L106
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_mul(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise product of the input arrays with broadcasting.
-
-    Example::
-
-       x = [[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]]
-
-       y = [[ 0.],
-            [ 1.]]
-
-       broadcast_mul(x, y) = [[ 0.,  0.,  0.],
-                              [ 1.,  1.,  1.]]
-
-    Supported sparse operations:
-
-       broadcast_mul(csr, dense(1D)) = csr
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L146
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_plus(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise sum of the input arrays with broadcasting.
-
-    `broadcast_plus` is an alias to the function `broadcast_add`.
-
-    Example::
-
-       x = [[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]]
-
-       y = [[ 0.],
-            [ 1.]]
-
-       broadcast_add(x, y) = [[ 1.,  1.,  1.],
-                              [ 2.,  2.,  2.]]
-
-       broadcast_plus(x, y) = [[ 1.,  1.,  1.],
-                               [ 2.,  2.,  2.]]
-
-    Supported sparse operations:
-
-       broadcast_add(csr, dense(1D)) = dense
-       broadcast_add(dense(1D), csr) = dense
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L58
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_sub(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise difference of the input arrays with broadcasting.
-
-    `broadcast_minus` is an alias to the function `broadcast_sub`.
-
-    Example::
-
-       x = [[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]]
-
-       y = [[ 0.],
-            [ 1.]]
-
-       broadcast_sub(x, y) = [[ 1.,  1.,  1.],
-                              [ 0.,  0.,  0.]]
-
-       broadcast_minus(x, y) = [[ 1.,  1.,  1.],
-                                [ 0.,  0.,  0.]]
-
-    Supported sparse operations:
-
-       broadcast_sub/minus(csr, dense(1D)) = dense
-       broadcast_sub/minus(dense(1D), csr) = dense
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L106
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -991,41 +631,6 @@ def cast_storage(data=None, stype=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def cbrt(data=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise cube-root value of the input.
-
-    .. math::
-       cbrt(x) = \sqrt[3]{x}
-
-    Example::
-
-       cbrt([1, 8, -125]) = [1, 2, -5]
-
-    The storage type of ``cbrt`` output depends upon the input storage type:
-
-       - cbrt(default) = default
-       - cbrt(row_sparse) = row_sparse
-       - cbrt(csr) = csr
-
-
-
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L883
-
-    Parameters
-    ----------
-    data : NDArray
-        The input array.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def ceil(data=None, out=None, name=None, **kwargs):
     r"""Returns element-wise ceiling of the input.
 
@@ -1039,11 +644,10 @@ def ceil(data=None, out=None, name=None, **kwargs):
 
        - ceil(default) = default
        - ceil(row_sparse) = row_sparse
-       - ceil(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L740
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L538
 
     Parameters
     ----------
@@ -1087,7 +691,7 @@ def clip(data=None, a_min=_Null, a_max=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L619
+    Defined in src/operator/tensor/matrix_op.cc:L617
 
     Parameters
     ----------
@@ -1097,64 +701,6 @@ def clip(data=None, a_min=_Null, a_max=_Null, out=None, name=None, **kwargs):
         Minimum value
     a_max : float, required
         Maximum value
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def concat(*data, **kwargs):
-    r"""Joins input arrays along a given axis.
-
-    .. note:: `Concat` is deprecated. Use `concat` instead.
-
-    The dimensions of the input arrays should be the same except the axis along
-    which they will be concatenated.
-    The dimension of the output array along the concatenated axis will be equal
-    to the sum of the corresponding dimensions of the input arrays.
-
-    The storage type of ``concat`` output depends on storage types of inputs
-
-    - concat(csr, csr, ..., csr, dim=0) = csr
-    - otherwise, ``concat`` generates output with default storage
-
-    Example::
-
-       x = [[1,1],[2,2]]
-       y = [[3,3],[4,4],[5,5]]
-       z = [[6,6], [7,7],[8,8]]
-
-       concat(x,y,z,dim=0) = [[ 1.,  1.],
-                              [ 2.,  2.],
-                              [ 3.,  3.],
-                              [ 4.,  4.],
-                              [ 5.,  5.],
-                              [ 6.,  6.],
-                              [ 7.,  7.],
-                              [ 8.,  8.]]
-
-       Note that you cannot concat x,y,z along dimension 1 since dimension
-       0 is not the same for all the input arrays.
-
-       concat(y,z,dim=1) = [[ 3.,  3.,  6.,  6.],
-                             [ 4.,  4.,  7.,  7.],
-                             [ 5.,  5.,  8.,  8.]]
-
-
-
-    Defined in src/operator/nn/concat.cc:L368
-
-    Parameters
-    ----------
-    data : NDArray[]
-        List of arrays to concatenate
-    dim : int, optional, default='1'
-        the dimension to be concated.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -1232,7 +778,6 @@ def degrees(data=None, out=None, name=None, **kwargs):
 
        - degrees(default) = default
        - degrees(row_sparse) = row_sparse
-       - degrees(csr) = csr
 
 
 
@@ -1253,7 +798,7 @@ def degrees(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_stype=_Null, out=None, name=None, **kwargs):
+def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, out=None, name=None, **kwargs):
     r"""Dot product of two arrays.
 
     ``dot``'s behavior depends on the input array dimensions:
@@ -1275,32 +820,17 @@ def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_stype=
         dot(x,y)[0,0,1,1] = 0
         sum(x[0,0,:]*y[:,1,1]) = 0
 
-    The storage type of ``dot`` output depends on storage types of inputs, transpose option and
-    forward_stype option for output storage type. Implemented sparse operations include:
+    The storage type of ``dot`` output depends on storage types of inputs and transpose options:
 
-    - dot(default, default, transpose_a=True/False, transpose_b=True/False) = default
-    - dot(csr, default, transpose_a=True) = default
-    - dot(csr, default, transpose_a=True) = row_sparse
     - dot(csr, default) = default
+    - dot(csr.T, default) = row_sparse
     - dot(csr, row_sparse) = default
-    - dot(default, csr) = csr (CPU only)
-    - dot(default, csr, forward_stype='default') = default
-    - dot(default, csr, transpose_b=True, forward_stype='default') = default
-
-    If the combination of input storage types and forward_stype does not match any of the
-    above patterns, ``dot`` will fallback and generate output with default storage.
-
-    .. Note::
-
-        If the storage type of the lhs is "csr", the storage type of gradient w.r.t rhs will be
-        "row_sparse". Only a subset of optimizers support sparse gradients, including SGD, AdaGrad
-        and Adam. Note that by default lazy updates is turned on, which may perform differently
-        from standard updates. For more details, please check the Optimization API at:
-        https://mxnet.incubator.apache.org/api/python/optimization/optimization.html
+    - dot(default, csr) = csr
+    - otherwise, ``dot`` generates output with default storage
 
 
 
-    Defined in src/operator/tensor/dot.cc:L77
+    Defined in src/operator/tensor/dot.cc:L62
 
     Parameters
     ----------
@@ -1312,8 +842,6 @@ def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_stype=
         If true then transpose the first input before dot.
     transpose_b : boolean, optional, default=0
         If true then transpose the second input before dot.
-    forward_stype : {None, 'csr', 'default', 'row_sparse'},optional, default='None'
-        The desired storage type of the forward output given by user, if thecombination of input storage types and this hint does not matchany implemented ones, the dot operator will perform fallback operationand still produce an output of the desired storage type.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -1332,10 +860,6 @@ def elemwise_add(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_add(row_sparse, row_sparse) = row_sparse
        - elemwise_add(csr, csr) = csr
-       - elemwise_add(default, csr) = default
-       - elemwise_add(csr, default) = default
-       - elemwise_add(default, rsp) = default
-       - elemwise_add(rsp, default) = default
        - otherwise, ``elemwise_add`` generates output with default storage
 
 
@@ -1388,8 +912,8 @@ def elemwise_mul(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_mul(default, default) = default
        - elemwise_mul(row_sparse, row_sparse) = row_sparse
-       - elemwise_mul(default, row_sparse) = row_sparse
-       - elemwise_mul(row_sparse, default) = row_sparse
+       - elemwise_mul(default, row_sparse) = default
+       - elemwise_mul(row_sparse, default) = default
        - elemwise_mul(csr, csr) = csr
        - otherwise, ``elemwise_mul`` generates output with default storage
 
@@ -1419,10 +943,6 @@ def elemwise_sub(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_sub(row_sparse, row_sparse) = row_sparse
        - elemwise_sub(csr, csr) = csr
-       - elemwise_sub(default, csr) = default
-       - elemwise_sub(csr, default) = default
-       - elemwise_sub(default, rsp) = default
-       - elemwise_sub(rsp, default) = default
        - otherwise, ``elemwise_sub`` generates output with default storage
 
 
@@ -1458,7 +978,7 @@ def exp(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L939
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L716
 
     Parameters
     ----------
@@ -1484,11 +1004,10 @@ def expm1(data=None, out=None, name=None, **kwargs):
 
        - expm1(default) = default
        - expm1(row_sparse) = row_sparse
-       - expm1(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L1018
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L795
 
     Parameters
     ----------
@@ -1517,11 +1036,10 @@ def fix(data=None, out=None, name=None, **kwargs):
 
        - fix(default) = default
        - fix(row_sparse) = row_sparse
-       - fix(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L797
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L595
 
     Parameters
     ----------
@@ -1551,11 +1069,10 @@ def floor(data=None, out=None, name=None, **kwargs):
 
        - floor(default) = default
        - floor(row_sparse) = row_sparse
-       - floor(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L759
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L557
 
     Parameters
     ----------
@@ -1595,7 +1112,7 @@ def ftrl_update(weight=None, grad=None, z=None, n=None, lr=_Null, lamda1=_Null, 
 
 
 
-    Defined in src/operator/optimizer_op.cc:L632
+    Defined in src/operator/optimizer_op.cc:L591
 
     Parameters
     ----------
@@ -1685,7 +1202,7 @@ def log(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L951
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L728
 
     Parameters
     ----------
@@ -1711,7 +1228,7 @@ def log10(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L963
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L740
 
     Parameters
     ----------
@@ -1738,11 +1255,10 @@ def log1p(data=None, out=None, name=None, **kwargs):
 
        - log1p(default) = default
        - log1p(row_sparse) = row_sparse
-       - log1p(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L1000
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L777
 
     Parameters
     ----------
@@ -1768,7 +1284,7 @@ def log2(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L975
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L752
 
     Parameters
     ----------
@@ -1809,7 +1325,7 @@ def make_loss(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L300
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L274
 
     Parameters
     ----------
@@ -1829,7 +1345,7 @@ def make_loss(data=None, out=None, name=None, **kwargs):
 def mean(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=None, **kwargs):
     r"""Computes the mean of array elements over given axes.
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L132
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L102
 
     Parameters
     ----------
@@ -1896,20 +1412,14 @@ def norm(data=None, ord=_Null, axis=_Null, keepdims=_Null, out=None, name=None, 
 
     This operator computes the norm on an NDArray with the specified axis, depending
     on the value of the ord parameter. By default, it computes the L2 norm on the entire
-    array. Currently only ord=2 supports sparse ndarrays.
+    array.
 
     Examples::
 
-      x = [[[1, 2],
-            [3, 4]],
-           [[2, 2],
-            [5, 6]]]
+      x = [[1, 2],
+           [3, 4]]
 
-      norm(x, ord=2, axis=1) = [[3.1622777 4.472136 ]
-                                [5.3851647 6.3245554]]
-
-      norm(x, ord=1, axis=1) = [[4., 6.],
-                                [7., 8.]]
+      norm(x) = [5.47722578]
 
       rsp = x.cast_storage('row_sparse')
 
@@ -1921,14 +1431,14 @@ def norm(data=None, ord=_Null, axis=_Null, keepdims=_Null, out=None, name=None, 
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L350
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L271
 
     Parameters
     ----------
     data : NDArray
         The input
     ord : int, optional, default='2'
-        Order of the norm. Currently ord=1 and ord=2 is supported.
+        Order of the norm. Currently ord=2 is supported.
     axis : Shape or None, optional, default=None
         The axis or axes along which to perform the reduction.
           The default, `axis=()`, will compute over all elements into a
@@ -1959,7 +1469,6 @@ def radians(data=None, out=None, name=None, **kwargs):
 
        - radians(default) = default
        - radians(row_sparse) = row_sparse
-       - radians(csr) = csr
 
 
 
@@ -1990,11 +1499,10 @@ def relu(data=None, out=None, name=None, **kwargs):
 
        - relu(default) = default
        - relu(row_sparse) = row_sparse
-       - relu(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L85
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L84
 
     Parameters
     ----------
@@ -2067,11 +1575,10 @@ def rint(data=None, out=None, name=None, **kwargs):
 
        - rint(default) = default
        - rint(row_sparse) = row_sparse
-       - rint(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L721
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L519
 
     Parameters
     ----------
@@ -2099,11 +1606,10 @@ def round(data=None, out=None, name=None, **kwargs):
 
       - round(default) = default
       - round(row_sparse) = row_sparse
-      - round(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L700
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L498
 
     Parameters
     ----------
@@ -2134,7 +1640,7 @@ def rsqrt(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L860
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L659
 
     Parameters
     ----------
@@ -2151,8 +1657,8 @@ def rsqrt(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
-    r"""Momentum update function for Stochastic Gradient Descent (SGD) optimizer.
+def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
+    r"""Momentum update function for Stochastic Gradient Descent (SDG) optimizer.
 
     Momentum update has better convergence rates on neural networks. Mathematically it looks
     like below:
@@ -2170,8 +1676,10 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
 
     Where the parameter ``momentum`` is the decay rate of momentum estimates at each epoch.
 
-    However, if grad's storage type is ``row_sparse``, ``lazy_update`` is True and weight's storage
-    type is the same as momentum's storage type,
+    If weight and grad are both of ``row_sparse`` storage type and momentum is of ``default`` storage type,
+    standard update is applied.
+
+    If weight, grad and momentum are all of ``row_sparse`` storage type,
     only the row slices whose indices appear in grad.indices are updated (for both weight and momentum)::
 
       for row in gradient.indices:
@@ -2180,7 +1688,7 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
 
 
 
-    Defined in src/operator/optimizer_op.cc:L372
+    Defined in src/operator/optimizer_op.cc:L336
 
     Parameters
     ----------
@@ -2200,8 +1708,6 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse and both weight and momentum have the same stype
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2213,22 +1719,22 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
     """
     return (0,)
 
-def sgd_update(weight=None, grad=None, lr=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
+def sgd_update(weight=None, grad=None, lr=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
     r"""Update function for Stochastic Gradient Descent (SDG) optimizer.
 
     It updates the weights using::
 
-     weight = weight - learning_rate * (gradient + wd * weight)
+     weight = weight - learning_rate * gradient
 
-    However, if gradient is of ``row_sparse`` storage type and ``lazy_update`` is True,
+    If weight is of ``row_sparse`` storage type,
     only the row slices whose indices appear in grad.indices are updated::
 
      for row in gradient.indices:
-         weight[row] = weight[row] - learning_rate * (gradient[row] + wd * weight[row])
+         weight[row] = weight[row] - learning_rate * gradient[row]
 
 
 
-    Defined in src/operator/optimizer_op.cc:L331
+    Defined in src/operator/optimizer_op.cc:L293
 
     Parameters
     ----------
@@ -2244,8 +1750,6 @@ def sgd_update(weight=None, grad=None, lr=_Null, wd=_Null, rescale_grad=_Null, c
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2267,7 +1771,7 @@ def sigmoid(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L101
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L103
 
     Parameters
     ----------
@@ -2295,11 +1799,10 @@ def sign(data=None, out=None, name=None, **kwargs):
 
        - sign(default) = default
        - sign(row_sparse) = row_sparse
-       - sign(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L681
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L479
 
     Parameters
     ----------
@@ -2328,7 +1831,6 @@ def sin(data=None, out=None, name=None, **kwargs):
 
        - sin(default) = default
        - sin(row_sparse) = row_sparse
-       - sin(csr) = csr
 
 
 
@@ -2359,7 +1861,6 @@ def sinh(data=None, out=None, name=None, **kwargs):
 
        - sinh(default) = default
        - sinh(row_sparse) = row_sparse
-       - sinh(csr) = csr
 
 
 
@@ -2410,9 +1911,9 @@ def slice(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **
     - otherwise, ``slice`` generates output with default storage
 
     .. note:: When input data storage type is csr, it only supports
-       step=(), or step=(None,), or step=(1,) to generate a csr output.
-       For other step parameter values, it falls back to slicing
-       a dense tensor.
+    step=(), or step=(None,), or step=(1,) to generate a csr output.
+    For other step parameter values, it falls back to slicing
+    a dense tensor.
 
     Example::
 
@@ -2427,7 +1928,7 @@ def slice(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **
                                                                 [1.,  3.]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L414
+    Defined in src/operator/tensor/matrix_op.cc:L412
 
     Parameters
     ----------
@@ -2439,6 +1940,33 @@ def slice(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **
         ending indices for the slice operation, supports negative indices.
     step : Shape(tuple), optional, default=[]
         step for the slice operation, supports negative values.
+
+    out : NDArray, optional
+        The output NDArray to hold the result.
+
+    Returns
+    -------
+    out : NDArray or list of NDArrays
+        The output of this function.
+    """
+    return (0,)
+
+def softsign(data=None, out=None, name=None, **kwargs):
+    r"""Computes softsign of x element-wise.
+
+    .. math::
+       y = x / (1 + abs(x))
+
+    The storage type of ``softsign`` output is always dense
+
+
+
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L119
+
+    Parameters
+    ----------
+    data : NDArray
+        The input array.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2464,11 +1992,10 @@ def sqrt(data=None, out=None, name=None, **kwargs):
 
        - sqrt(default) = default
        - sqrt(row_sparse) = row_sparse
-       - sqrt(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L840
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L639
 
     Parameters
     ----------
@@ -2503,7 +2030,7 @@ def square(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L817
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L616
 
     Parameters
     ----------
@@ -2548,7 +2075,7 @@ def stop_gradient(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L267
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L241
 
     Parameters
     ----------
@@ -2576,9 +2103,9 @@ def sum(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
 
     Example::
 
-      data = [[[1, 2], [2, 3], [1, 3]],
-              [[1, 4], [4, 3], [5, 2]],
-              [[7, 1], [7, 2], [7, 3]]]
+      data = [[[1,2],[2,3],[1,3]],
+              [[1,4],[4,3],[5,2]],
+              [[7,1],[7,2],[7,3]]]
 
       sum(data, axis=1)
       [[  4.   8.]
@@ -2588,9 +2115,9 @@ def sum(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
       sum(data, axis=[1,2])
       [ 12.  19.  27.]
 
-      data = [[1, 2, 0],
-              [3, 0, 1],
-              [4, 1, 0]]
+      data = [[1,2,0],
+              [3,0,1],
+              [4,1,0]]
 
       csr = cast_storage(data, 'csr')
 
@@ -2602,7 +2129,7 @@ def sum(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L116
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L86
 
     Parameters
     ----------
@@ -2650,7 +2177,6 @@ def tan(data=None, out=None, name=None, **kwargs):
 
        - tan(default) = default
        - tan(row_sparse) = row_sparse
-       - tan(csr) = csr
 
 
 
@@ -2681,7 +2207,6 @@ def tanh(data=None, out=None, name=None, **kwargs):
 
        - tanh(default) = default
        - tanh(row_sparse) = row_sparse
-       - tanh(csr) = csr
 
 
 
@@ -2716,11 +2241,10 @@ def trunc(data=None, out=None, name=None, **kwargs):
 
        - trunc(default) = default
        - trunc(row_sparse) = row_sparse
-       - trunc(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L779
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L577
 
     Parameters
     ----------
@@ -2785,7 +2309,7 @@ def where(condition=None, x=None, y=None, out=None, name=None, **kwargs):
     return (0,)
 
 def zeros_like(data=None, out=None, name=None, **kwargs):
-    r"""Return an array of zeros with the same shape, type and storage type
+    r"""Return an array of zeros with the same shape and type
     as the input array.
 
     The storage type of ``zeros_like`` output depends on the storage type of the input
@@ -2819,4 +2343,4 @@ def zeros_like(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-__all__ = ['ElementWiseSum', 'Embedding', 'FullyConnected', 'LinearRegressionOutput', 'LogisticRegressionOutput', 'MAERegressionOutput', 'abs', 'adagrad_update', 'adam_update', 'add_n', 'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctanh', 'broadcast_add', 'broadcast_div', 'broadcast_minus', 'broadcast_mul', 'broadcast_plus', 'broadcast_sub', 'cast_storage', 'cbrt', 'ceil', 'clip', 'concat', 'cos', 'cosh', 'degrees', 'dot', 'elemwise_add', 'elemwise_div', 'elemwise_mul', 'elemwise_sub', 'exp', 'expm1', 'fix', 'floor', 'ftrl_update', 'gamma', 'gammaln', 'log', 'log10', 'log1p', 'log2', 'make_loss', 'mean', 'negative', 'norm', 'radians', 'relu', 'retain', 'rint', 'round', 'rsqrt', 'sgd_mom_update', 'sgd_update', 'sigmoid', 'sign', 'sin', 'sinh', 'slice', 'sqrt', 'square', 'stop_gradient', 'sum', 'tan', 'tanh', 'trunc', 'where', 'zeros_like']
+__all__ = ['ElementWiseSum', 'FullyConnected', 'LinearRegressionOutput', 'LogisticRegressionOutput', 'MAERegressionOutput', 'abs', 'adagrad_update', 'adam_update', 'add_n', 'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctanh', 'cast_storage', 'ceil', 'clip', 'cos', 'cosh', 'degrees', 'dot', 'elemwise_add', 'elemwise_div', 'elemwise_mul', 'elemwise_sub', 'exp', 'expm1', 'fix', 'floor', 'ftrl_update', 'gamma', 'gammaln', 'log', 'log10', 'log1p', 'log2', 'make_loss', 'mean', 'negative', 'norm', 'radians', 'relu', 'retain', 'rint', 'round', 'rsqrt', 'sgd_mom_update', 'sgd_update', 'sigmoid', 'sign', 'sin', 'sinh', 'slice', 'softsign', 'sqrt', 'square', 'stop_gradient', 'sum', 'tan', 'tanh', 'trunc', 'where', 'zeros_like']

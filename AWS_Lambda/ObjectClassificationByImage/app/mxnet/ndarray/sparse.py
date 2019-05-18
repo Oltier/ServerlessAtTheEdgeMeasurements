@@ -42,13 +42,13 @@ from ..base import NotSupportedForSparseNDArray
 from ..base import _LIB, numeric_types
 from ..base import c_array_buf, mx_real_t, integer_types
 from ..base import mx_uint, NDArrayHandle, check_call
-from ..context import Context, current_context
+from ..context import Context
 from . import _internal
 from . import op
 try:
-    from .gen_sparse import retain as gs_retain # pylint: disable=redefined-builtin
+    from .gen_sparse import * # pylint: disable=redefined-builtin
 except ImportError:
-    gs_retain = None
+    pass
 from ._internal import _set_ndarray_class
 from .ndarray import NDArray, _storage_type, _DTYPE_NP_TO_MX, _DTYPE_MX_TO_NP
 from .ndarray import _STORAGE_TYPE_STR_TO_ID, _STORAGE_TYPE_ROW_SPARSE, _STORAGE_TYPE_CSR
@@ -195,8 +195,7 @@ class BaseSparseNDArray(NDArray):
         return self.tostype('default').asnumpy()
 
     def astype(self, dtype, copy=True):
-        """Return a copy of the array after casting to a specified type.
-
+        """Returns a copy of the array after casting to a specified type.
         Parameters
         ----------
         dtype : numpy.dtype or str
@@ -206,7 +205,6 @@ class BaseSparseNDArray(NDArray):
             allocated ndarray on the same context. If this is set to
             `False`, and the dtype requested is the same as the ndarray's
             dtype, the ndarray is returned instead of a copy.
-
         Examples
         --------
         >>> x = mx.nd.sparse.zeros('row_sparse', (2,3), dtype='float32')
@@ -341,7 +339,7 @@ class CSRNDArray(BaseSparseNDArray):
 
         Parameters
         ----------
-        key : int or mxnet.ndarray.NDArray.slice
+        key : int or slice
             Indexing key.
 
         Examples
@@ -389,7 +387,7 @@ class CSRNDArray(BaseSparseNDArray):
 
         Parameters
         ----------
-        key : mxnet.ndarray.NDArray.slice
+        key : slice
             The indexing key.
         value : NDArray or CSRNDArray or numpy.ndarray
             The value to set.
@@ -420,7 +418,7 @@ class CSRNDArray(BaseSparseNDArray):
         if isinstance(key, py_slice):
             if key.step is not None or key.start is not None or key.stop is not None:
                 raise ValueError('Assignment with slice for CSRNDArray is not ' \
-                                 'implemented yet.')
+                                 'implmented yet.')
             if isinstance(value, NDArray):
                 # avoid copying to itself
                 if value.handle is not self.handle:
@@ -529,7 +527,7 @@ class CSRNDArray(BaseSparseNDArray):
             return super(CSRNDArray, self).copyto(other)
         elif isinstance(other, NDArray):
             stype = other.stype
-            if stype in ('default', 'csr'):
+            if stype == 'default' or stype == 'csr':
                 return super(CSRNDArray, self).copyto(other)
             else:
                 raise TypeError('copyto does not support destination NDArray stype ' + str(stype))
@@ -626,7 +624,7 @@ class RowSparseNDArray(BaseSparseNDArray):
 
         Parameters
         ----------
-        key : mxnet.ndarray.NDArray.slice
+        key : slice
             Indexing key.
 
         Examples
@@ -654,7 +652,7 @@ class RowSparseNDArray(BaseSparseNDArray):
 
         Parameters
         ----------
-        key : mxnet.ndarray.NDArray.slice
+        key : slice
             The indexing key.
         value : NDArray or numpy.ndarray
             The value to set.
@@ -776,7 +774,7 @@ class RowSparseNDArray(BaseSparseNDArray):
             return super(RowSparseNDArray, self).copyto(other)
         elif isinstance(other, NDArray):
             stype = other.stype
-            if stype in ('default', 'row_sparse'):
+            if stype == 'default' or stype == 'row_sparse':
                 return super(RowSparseNDArray, self).copyto(other)
             else:
                 raise TypeError('copyto does not support destination NDArray stype ' + str(stype))
@@ -789,9 +787,7 @@ class RowSparseNDArray(BaseSparseNDArray):
         The arguments are the same as for :py:func:`retain`, with
         this array as data.
         """
-        if not gs_retain:
-            raise ImportError("gen_sparse could not be imported")
-        return gs_retain(*args, **kwargs)
+        return retain(self, *args, **kwargs)
 
 def _prepare_src_array(source_array, dtype):
     """Prepare `source_array` so that it can be used to construct NDArray.
@@ -981,7 +977,7 @@ def _csr_matrix_from_definition(data, indices, indptr, shape=None, ctx=None,
     # pylint: disable= no-member, protected-access
     storage_type = 'csr'
     # context
-    ctx = current_context() if ctx is None else ctx
+    ctx = Context.default_ctx if ctx is None else ctx
     # types
     dtype = _prepare_default_dtype(data, dtype)
     indptr_type = _STORAGE_AUX_TYPES[storage_type][0] if indptr_type is None else indptr_type
@@ -1025,28 +1021,28 @@ def row_sparse_array(arg1, shape=None, ctx=None, dtype=None):
 
     - row_sparse_array(D):
         to construct a RowSparseNDArray with a dense ndarray ``D``
-        -  **D** (*array_like*) - An object exposing the array interface, an object whose \
-        `__array__` method returns an array, or any (nested) sequence.
-        - **ctx** (*Context, optional*) - Device context \
-        (default is the current default context).
-        - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
-        The default dtype is ``D.dtype`` if ``D`` is an NDArray or numpy.ndarray, \
-        float32 otherwise.
+            -  **D** (*array_like*) - An object exposing the array interface, an object whose \
+            `__array__` method returns an array, or any (nested) sequence.
+            - **ctx** (*Context, optional*) - Device context \
+            (default is the current default context).
+            - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
+            The default dtype is ``D.dtype`` if ``D`` is an NDArray or numpy.ndarray, \
+            float32 otherwise.
 
     - row_sparse_array(S)
         to construct a RowSparseNDArray with a sparse ndarray ``S``
-        -  **S** (*RowSparseNDArray*) - A sparse ndarray.
-        - **ctx** (*Context, optional*) - Device context \
-        (default is the current default context).
-        - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
-        The default dtype is ``S.dtype``.
+            -  **S** (*RowSparseNDArray*) - A sparse ndarray.
+            - **ctx** (*Context, optional*) - Device context \
+            (default is the current default context).
+            - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
+            The default dtype is ``S.dtype``.
 
     - row_sparse_array((D0, D1 .. Dn))
         to construct an empty RowSparseNDArray with shape ``(D0, D1, ... Dn)``
-        -  **D0, D1 .. Dn** (*int*) - The shape of the ndarray
-        - **ctx** (*Context, optional*) - Device context \
-        (default is the current default context).
-        - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
+            -  **D0, D1 .. Dn** (*int*) - The shape of the ndarray
+            - **ctx** (*Context, optional*) - Device context \
+            (default is the current default context).
+            - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
             The default dtype is float32.
 
     - row_sparse_array((data, indices))
@@ -1057,35 +1053,35 @@ def row_sparse_array(arg1, shape=None, ctx=None, dtype=None):
         represented by RowSparseNDArray ``rsp`` has \
         ``dense[rsp.indices[i], :, :, :, ...] = rsp.data[i, :, :, :, ...]``
         The row indices for are expected to be **sorted in ascending order.** \
-        - **data** (*array_like*) - An object exposing the array interface, which \
-        holds all the non-zero row slices of the array.
-        - **indices** (*array_like*) - An object exposing the array interface, which \
-        stores the row index for each row slice with non-zero elements.
-        - **shape** (*tuple of int, optional*) - The shape of the array. The default \
-        shape is inferred from the indices and indptr arrays.
-        - **ctx** (*Context, optional*) - Device context \
-        (default is the current default context).
-        - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
-        The default dtype is float32.
+            - **data** (*array_like*) - An object exposing the array interface, which \
+            holds all the non-zero row slices of the array.
+            - **indices** (*array_like*) - An object exposing the array interface, which \
+            stores the row index for each row slice with non-zero elements.
+            - **shape** (*tuple of int, optional*) - The shape of the array. The default \
+            shape is inferred from the indices and indptr arrays.
+            - **ctx** (*Context, optional*) - Device context \
+            (default is the current default context).
+            - **dtype** (*str or numpy.dtype, optional*) - The data type of the output array. \
+            The default dtype is float32.
 
     Parameters
     ----------
-    arg1 : NDArray, numpy.ndarray, RowSparseNDArray, tuple of int or tuple of array_like
+    arg1: NDArray, numpy.ndarray, RowSparseNDArray, tuple of int or tuple of array_like
         The argument to help instantiate the row sparse ndarray. See above for further details.
     shape : tuple of int, optional
-        The shape of the row sparse ndarray. (Default value = None)
+        The shape of the row sparse ndarray.
     ctx : Context, optional
         Device context (default is the current default context).
     dtype : str or numpy.dtype, optional
-        The data type of the output array. (Default value = None)
+        The data type of the output array.
 
     Returns
     -------
     RowSparseNDArray
         An `RowSparseNDArray` with the `row_sparse` storage representation.
 
-    Examples
-    --------
+    Example
+    -------
     >>> a = mx.nd.sparse.row_sparse_array(([[1, 2], [3, 4]], [1, 4]), shape=(6, 2))
     >>> a.asnumpy()
     array([[ 0.,  0.],
@@ -1144,7 +1140,7 @@ def _row_sparse_ndarray_from_definition(data, indices, shape=None, ctx=None,
     """Create a `RowSparseNDArray` based on data and indices"""
     storage_type = 'row_sparse'
     # context
-    ctx = current_context() if ctx is None else ctx
+    ctx = Context.default_ctx if ctx is None else ctx
     # types
     dtype = _prepare_default_dtype(data, dtype)
     indices_type = _STORAGE_AUX_TYPES[storage_type][0] if indices_type is None else indices_type
@@ -1205,9 +1201,9 @@ def add(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.sparse.array
+    lhs : scalar or array
         First array to be added.
-    rhs : scalar or mxnet.ndarray.sparse.array
+    rhs : scalar or array
          Second array to be added.
         If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -1277,9 +1273,9 @@ def subtract(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.sparse.array
+    lhs : scalar or array
         First array to be subtracted.
-    rhs : scalar or mxnet.ndarray.sparse.array
+    rhs : scalar or array
          Second array to be subtracted.
         If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.__spec__
@@ -1348,9 +1344,9 @@ def multiply(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.sparse.array
+    lhs : scalar or array
         First array to be multiplied.
-    rhs : scalar or mxnet.ndarray.sparse.array
+    rhs : scalar or array
          Second array to be multiplied.
         If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -1432,9 +1428,9 @@ def divide(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.sparse.array
+    lhs : scalar or array
         First array in division.
-    rhs : scalar or mxnet.ndarray.sparse.array
+    rhs : scalar or array
          Second array in division.
         The arrays to be divided. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -1533,9 +1529,9 @@ def zeros(stype, shape, ctx=None, dtype=None, **kwargs):
     if stype == 'default':
         return _zeros_ndarray(shape, ctx=ctx, dtype=dtype, **kwargs)
     if ctx is None:
-        ctx = current_context()
+        ctx = Context.default_ctx
     dtype = mx_real_t if dtype is None else dtype
-    if stype in ('row_sparse', 'csr'):
+    if stype == 'row_sparse' or stype == 'csr':
         aux_types = _STORAGE_AUX_TYPES[stype]
     else:
         raise ValueError("unknown storage type" + stype)
@@ -1566,11 +1562,11 @@ def empty(stype, shape, ctx=None, dtype=None):
     if isinstance(shape, int):
         shape = (shape, )
     if ctx is None:
-        ctx = current_context()
+        ctx = Context.default_ctx
     if dtype is None:
         dtype = mx_real_t
     assert(stype is not None)
-    if stype in ('csr', 'row_sparse'):
+    if stype == 'csr' or stype == 'row_sparse':
         return zeros(stype, shape, ctx=ctx, dtype=dtype)
     else:
         raise Exception("unknown stype : " + str(stype))
@@ -1607,7 +1603,7 @@ def array(source_array, ctx=None, dtype=None):
     >>> mx.nd.sparse.array(mx.nd.sparse.zeros('row_sparse', (3, 2)))
     <RowSparseNDArray 3x2 @cpu(0)>
     """
-    ctx = current_context() if ctx is None else ctx
+    ctx = Context.default_ctx if ctx is None else ctx
     if isinstance(source_array, NDArray):
         assert(source_array.stype != 'default'), \
                "Please use `tostype` to create RowSparseNDArray or CSRNDArray from an NDArray"

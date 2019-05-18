@@ -16,7 +16,7 @@ def Activation(data=None, act_type=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/nn/activation.cc:L168
+    Defined in src/operator/nn/activation.cc:L163
 
     Parameters
     ----------
@@ -59,7 +59,7 @@ def BatchNorm(data=None, gamma=None, beta=None, moving_mean=None, moving_var=Non
 
     Assume the input has size *k* on axis 1, then both ``gamma`` and ``beta``
     have shape *(k,)*. If ``output_mean_var`` is set to be true, then outputs both ``data_mean`` and
-    the inverse of ``data_var``, which are needed for the backward pass. Note that gradient of these
+    the inverse of ``data_var``, which are needed for the backward pass. Note that gradient of these 
     two outputs are blocked.
 
     Besides the inputs and the outputs, this operator accepts two auxiliary
@@ -81,13 +81,9 @@ def BatchNorm(data=None, gamma=None, beta=None, moving_mean=None, moving_var=Non
     Both ``gamma`` and ``beta`` are learnable parameters. But if ``fix_gamma`` is true,
     then set ``gamma`` to 1 and its gradient to 0.
 
-    .. Note::
-      When ``fix_gamma`` is set to True, no sparse support is provided. If ``fix_gamma is`` set to False,
-      the sparse tensors will fallback.
 
 
-
-    Defined in src/operator/nn/batch_norm.cc:L574
+    Defined in src/operator/nn/batch_norm.cc:L575
 
     Parameters
     ----------
@@ -169,12 +165,9 @@ def BatchNorm_v1(data=None, gamma=None, beta=None, eps=_Null, momentum=_Null, fi
     Both ``gamma`` and ``beta`` are learnable parameters. But if ``fix_gamma`` is true,
     then set ``gamma`` to 1 and its gradient to 0.
 
-    There's no sparse support for this operator, and it will exhibit problematic behavior if used with
-    sparse tensors.
 
 
-
-    Defined in src/operator/batch_norm_v1.cc:L95
+    Defined in src/operator/batch_norm_v1.cc:L92
 
     Parameters
     ----------
@@ -205,7 +198,7 @@ def BatchNorm_v1(data=None, gamma=None, beta=None, eps=_Null, momentum=_Null, fi
     """
     return (0,)
 
-def BilinearSampler(data=None, grid=None, cudnn_off=_Null, out=None, name=None, **kwargs):
+def BilinearSampler(data=None, grid=None, out=None, name=None, **kwargs):
     r"""Applies bilinear sampling to input feature map.
 
     Bilinear Sampling is the key of  [NIPS2015] \"Spatial Transformer Networks\". The usage of the operator is very similar to remap function in OpenCV,
@@ -279,7 +272,7 @@ def BilinearSampler(data=None, grid=None, cudnn_off=_Null, out=None, name=None, 
          [ 0,  1,  3,  0]]]
 
 
-    Defined in src/operator/bilinear_sampler.cc:L256
+    Defined in src/operator/bilinear_sampler.cc:L245
 
     Parameters
     ----------
@@ -287,8 +280,6 @@ def BilinearSampler(data=None, grid=None, cudnn_off=_Null, out=None, name=None, 
         Input data to the BilinearsamplerOp.
     grid : NDArray
         Input grid to the BilinearsamplerOp.grid has two channels: x_src, y_src
-    cudnn_off : boolean or None, optional, default=None
-        whether to turn cudnn off
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -328,89 +319,12 @@ def BlockGrad(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L267
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L241
 
     Parameters
     ----------
     data : NDArray
         The input array.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def CTCLoss(data=None, label=None, data_lengths=None, label_lengths=None, use_data_lengths=_Null, use_label_lengths=_Null, blank_label=_Null, out=None, name=None, **kwargs):
-    r"""Connectionist Temporal Classification Loss.
-
-    .. note:: The existing alias ``contrib_CTCLoss`` is deprecated.
-
-    The shapes of the inputs and outputs:
-
-    - **data**: `(sequence_length, batch_size, alphabet_size)`
-    - **label**: `(batch_size, label_sequence_length)`
-    - **out**: `(batch_size)`
-
-    The `data` tensor consists of sequences of activation vectors (without applying softmax),
-    with i-th channel in the last dimension corresponding to i-th label
-    for i between 0 and alphabet_size-1 (i.e always 0-indexed).
-    Alphabet size should include one additional value reserved for blank label.
-    When `blank_label` is ``"first"``, the ``0``-th channel is be reserved for
-    activation of blank label, or otherwise if it is "last", ``(alphabet_size-1)``-th channel should be
-    reserved for blank label.
-
-    ``label`` is an index matrix of integers. When `blank_label` is ``"first"``,
-    the value 0 is then reserved for blank label, and should not be passed in this matrix. Otherwise,
-    when `blank_label` is ``"last"``, the value `(alphabet_size-1)` is reserved for blank label.
-
-    If a sequence of labels is shorter than *label_sequence_length*, use the special
-    padding value at the end of the sequence to conform it to the correct
-    length. The padding value is `0` when `blank_label` is ``"first"``, and `-1` otherwise.
-
-    For example, suppose the vocabulary is `[a, b, c]`, and in one batch we have three sequences
-    'ba', 'cbb', and 'abac'. When `blank_label` is ``"first"``, we can index the labels as
-    `{'a': 1, 'b': 2, 'c': 3}`, and we reserve the 0-th channel for blank label in data tensor.
-    The resulting `label` tensor should be padded to be::
-
-      [[2, 1, 0, 0], [3, 2, 2, 0], [1, 2, 1, 3]]
-
-    When `blank_label` is ``"last"``, we can index the labels as
-    `{'a': 0, 'b': 1, 'c': 2}`, and we reserve the channel index 3 for blank label in data tensor.
-    The resulting `label` tensor should be padded to be::
-
-      [[1, 0, -1, -1], [2, 1, 1, -1], [0, 1, 0, 2]]
-
-    ``out`` is a list of CTC loss values, one per example in the batch.
-
-    See *Connectionist Temporal Classification: Labelling Unsegmented
-    Sequence Data with Recurrent Neural Networks*, A. Graves *et al*. for more
-    information on the definition and the algorithm.
-
-
-
-    Defined in src/operator/nn/ctc_loss.cc:L100
-
-    Parameters
-    ----------
-    data : NDArray
-        Input ndarray
-    label : NDArray
-        Ground-truth labels for the loss.
-    data_lengths : NDArray
-        Lengths of data for each of the samples. Only required when use_data_lengths is true.
-    label_lengths : NDArray
-        Lengths of labels for each of the samples. Only required when use_label_lengths is true.
-    use_data_lengths : boolean, optional, default=0
-        Whether the data lenghts are decided by `data_lengths`. If false, the lengths are equal to the max sequence length.
-    use_label_lengths : boolean, optional, default=0
-        Whether the label lenghts are decided by `label_lengths`, or derived from `padding_mask`. If false, the lengths are derived from the first occurrence of the value of `padding_mask`. The value of `padding_mask` is ``0`` when first CTC label is reserved for blank, and ``-1`` when last label is reserved for blank. See `blank_label`.
-    blank_label : {'first', 'last'},optional, default='first'
-        Set the label that is reserved for blank label.If "first", 0-th label is reserved, and label values for tokens in the vocabulary are between ``1`` and ``alphabet_size-1``, and the padding mask is ``-1``. If "last", last label value ``alphabet_size-1`` is reserved for blank label instead, and label values for tokens in the vocabulary are between ``0`` and ``alphabet_size-2``, and the padding mask is ``0``.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -435,7 +349,7 @@ def Cast(data=None, dtype=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L596
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L385
 
     Parameters
     ----------
@@ -464,11 +378,6 @@ def Concat(*data, **kwargs):
     The dimension of the output array along the concatenated axis will be equal
     to the sum of the corresponding dimensions of the input arrays.
 
-    The storage type of ``concat`` output depends on storage types of inputs
-
-    - concat(csr, csr, ..., csr, dim=0) = csr
-    - otherwise, ``concat`` generates output with default storage
-
     Example::
 
        x = [[1,1],[2,2]]
@@ -493,7 +402,7 @@ def Concat(*data, **kwargs):
 
 
 
-    Defined in src/operator/nn/concat.cc:L368
+    Defined in src/operator/nn/concat.cc:L235
 
     Parameters
     ----------
@@ -544,7 +453,7 @@ def Convolution(data=None, weight=None, bias=None, kernel=_Null, stride=_Null, d
     If ``no_bias`` is set to be true, then the ``bias`` term is ignored.
 
     The default data ``layout`` is *NCHW*, namely *(batch_size, channel, height,
-    width)*. We can choose other layouts such as *NWC*.
+    width)*. We can choose other layouts such as *NHWC*.
 
     If ``num_group`` is larger than 1, denoted by *g*, then split the input ``data``
     evenly into *g* parts along the channel axis, and also evenly split ``weight``
@@ -587,7 +496,7 @@ def Convolution(data=None, weight=None, bias=None, kernel=_Null, stride=_Null, d
 
 
 
-    Defined in src/operator/nn/convolution.cc:L461
+    Defined in src/operator/nn/convolution.cc:L456
 
     Parameters
     ----------
@@ -619,7 +528,7 @@ def Convolution(data=None, weight=None, bias=None, kernel=_Null, stride=_Null, d
         Turn off cudnn for this layer.
     layout : {None, 'NCDHW', 'NCHW', 'NCW', 'NDHWC', 'NHWC'},optional, default='None'
         Set layout for input, output and weight. Empty for
-        default layout: NCW for 1d, NCHW for 2d and NCDHW for 3d.NHWC and NDHWC are only supported on GPU.
+        default layout: NCW for 1d, NCHW for 2d and NCDHW for 3d.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -852,7 +761,7 @@ def Deconvolution(data=None, weight=None, bias=None, kernel=_Null, stride=_Null,
     cudnn_off : boolean, optional, default=0
         Turn off cudnn for this layer.
     layout : {None, 'NCDHW', 'NCHW', 'NCW', 'NDHWC', 'NHWC'},optional, default='None'
-        Set layout for input, output and weight. Empty for default layout, NCW for 1d, NCHW for 2d and NCDHW for 3d.NHWC and NDHWC are only supported on GPU.
+        Set layout for input, output and weight. Empty for default layout, NCW for 1d, NCHW for 2d and NCDHW for 3d.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -930,13 +839,11 @@ def ElementWiseSum(*args, **kwargs):
     The storage type of ``add_n`` output depends on storage types of inputs
 
     - add_n(row_sparse, row_sparse, ..) = row_sparse
-    - add_n(default, csr, default) = default
-    - add_n(any input combinations longer than 4 (>4) with at least one default type) = default
-    - otherwise, ``add_n`` falls all inputs back to default storage and generates default storage
+    - otherwise, ``add_n`` generates output with default storage
 
 
 
-    Defined in src/operator/tensor/elemwise_sum.cc:L156
+    Defined in src/operator/tensor/elemwise_sum.cc:L150
 
     Parameters
     ----------
@@ -953,7 +860,7 @@ def ElementWiseSum(*args, **kwargs):
     """
     return (0,)
 
-def Embedding(data=None, weight=None, input_dim=_Null, output_dim=_Null, dtype=_Null, sparse_grad=_Null, out=None, name=None, **kwargs):
+def Embedding(data=None, weight=None, input_dim=_Null, output_dim=_Null, dtype=_Null, out=None, name=None, **kwargs):
     r"""Maps integer indices to vector representations (embeddings).
 
     This operator maps words to real-valued vectors in a high-dimensional space,
@@ -994,19 +901,8 @@ def Embedding(data=None, weight=None, input_dim=_Null, output_dim=_Null, dtype=_
                                 [ 10.,  11.,  12.,  13.,  14.]]]
 
 
-    The storage type of weight can be either row_sparse or default.
 
-    .. Note::
-
-        If "sparse_grad" is set to True, the storage type of gradient w.r.t weights will be
-        "row_sparse". Only a subset of optimizers support sparse gradients, including SGD, AdaGrad
-        and Adam. Note that by default lazy updates is turned on, which may perform differently
-        from standard updates. For more details, please check the Optimization API at:
-        https://mxnet.incubator.apache.org/api/python/optimization/optimization.html
-
-
-
-    Defined in src/operator/tensor/indexing_op.cc:L519
+    Defined in src/operator/tensor/indexing_op.cc:L227
 
     Parameters
     ----------
@@ -1020,8 +916,6 @@ def Embedding(data=None, weight=None, input_dim=_Null, output_dim=_Null, dtype=_
         Dimension of the embedding vectors.
     dtype : {'float16', 'float32', 'float64', 'int32', 'int64', 'int8', 'uint8'},optional, default='float32'
         Data type of weight.
-    sparse_grad : boolean, optional, default=0
-        Compute row sparse gradient in the backward calculation. If set to True, the grad's storage type is row_sparse.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -1061,7 +955,7 @@ def Flatten(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L259
+    Defined in src/operator/tensor/matrix_op.cc:L258
 
     Parameters
     ----------
@@ -1099,19 +993,13 @@ def FullyConnected(data=None, weight=None, bias=None, num_hidden=_Null, no_bias=
 
     If ``no_bias`` is set to be true, then the ``bias`` term is ignored.
 
-    .. Note::
-
-        The sparse support for FullyConnected is limited to forward evaluation with `row_sparse`
-        weight and bias, where the length of `weight.indices` and `bias.indices` must be equal
-        to `num_hidden`. This could be useful for model inference with `row_sparse` weights
-        trained with importance sampling or noise contrastive estimation.
-
-        To compute linear transformation with 'csr' sparse data, sparse.dot is recommended instead
-        of sparse.FullyConnected.
+    Note that the operator also supports forward computation with `row_sparse` weight and bias,
+    where the length of `weight.indices` and `bias.indices` must be equal to `num_hidden`.
+    This could be used for model inference with `row_sparse` weights trained with `SparseEmbedding`.
 
 
 
-    Defined in src/operator/nn/fully_connected.cc:L271
+    Defined in src/operator/nn/fully_connected.cc:L254
 
     Parameters
     ----------
@@ -1304,7 +1192,7 @@ def L2Normalization(data=None, eps=_Null, mode=_Null, out=None, name=None, **kwa
 
 
 
-    Defined in src/operator/l2_normalization.cc:L196
+    Defined in src/operator/l2_normalization.cc:L98
 
     Parameters
     ----------
@@ -1336,14 +1224,14 @@ def LRN(data=None, alpha=_Null, beta=_Null, knorm=_Null, nsize=_Null, out=None, 
     activity :math:`b_{x,y}^{i}` is given by the expression:
 
     .. math::
-       b_{x,y}^{i} = \frac{a_{x,y}^{i}}{\Bigg({k + \frac{\alpha}{n} \sum_{j=max(0, i-\frac{n}{2})}^{min(N-1, i+\frac{n}{2})} (a_{x,y}^{j})^{2}}\Bigg)^{\beta}}
+       b_{x,y}^{i} = \frac{a_{x,y}^{i}}{\Bigg({k + \alpha \sum_{j=max(0, i-\frac{n}{2})}^{min(N-1, i+\frac{n}{2})} (a_{x,y}^{j})^{2}}\Bigg)^{\beta}}
 
     where the sum runs over :math:`n` "adjacent" kernel maps at the same spatial position, and :math:`N` is the total
     number of kernels in the layer.
 
 
 
-    Defined in src/operator/nn/lrn.cc:L164
+    Defined in src/operator/nn/lrn.cc:L175
 
     Parameters
     ----------
@@ -1432,8 +1320,6 @@ def LeakyReLU(data=None, gamma=None, act_type=_Null, slope=_Null, lower_bound=_N
     The following modified ReLU Activation functions are supported:
 
     - *elu*: Exponential Linear Unit. `y = x > 0 ? x : slope * (exp(x)-1)`
-    - *selu*: Scaled Exponential Linear Unit. `y = lambda * (x > 0 ? x : alpha * (exp(x) - 1))` where
-      *lambda = 1.0507009873554804934193349852946* and *alpha = 1.6732632423543772848170429916717*.
     - *leaky*: Leaky ReLU. `y = x > 0 ? x : slope * x`
     - *prelu*: Parametric ReLU. This is same as *leaky* except that `slope` is learnt during training.
     - *rrelu*: Randomized ReLU. same as *leaky* but the `slope` is uniformly and randomly chosen from
@@ -1442,7 +1328,7 @@ def LeakyReLU(data=None, gamma=None, act_type=_Null, slope=_Null, lower_bound=_N
 
 
 
-    Defined in src/operator/leaky_relu.cc:L65
+    Defined in src/operator/leaky_relu.cc:L63
 
     Parameters
     ----------
@@ -1450,7 +1336,7 @@ def LeakyReLU(data=None, gamma=None, act_type=_Null, slope=_Null, lower_bound=_N
         Input data to activation function.
     gamma : NDArray
         Slope parameter for PReLU. Only required when act_type is 'prelu'. It should be either a vector of size 1, or the same size as the second dimension of data.
-    act_type : {'elu', 'leaky', 'prelu', 'rrelu', 'selu'},optional, default='leaky'
+    act_type : {'elu', 'leaky', 'prelu', 'rrelu'},optional, default='leaky'
         Activation function to be applied.
     slope : float, optional, default=0.25
         Init slope for the activation. (For leaky and elu only)
@@ -1530,16 +1416,12 @@ def LogisticRegressionOutput(data=None, label=None, grad_scale=_Null, out=None, 
     - LogisticRegressionOutput(default, default) = default
     - LogisticRegressionOutput(default, csr) = default
 
-    The loss function used is the Binary Cross Entropy Loss:
-
-    :math:`-{(y\log(p) + (1 - y)\log(1 - p))}`
-
-    Where `y` is the ground truth probability of positive outcome for a given example, and `p` the probability predicted by the model. By default, gradients of this loss function are scaled by factor `1/m`, where m is the number of regression outputs of a training example.
+    By default, gradients of this loss function are scaled by factor `1/m`, where m is the number of regression outputs of a training example.
     The parameter `grad_scale` can be used to change this scale to `grad_scale/m`.
 
 
 
-    Defined in src/operator/regression_output.cc:L152
+    Defined in src/operator/regression_output.cc:L148
 
     Parameters
     ----------
@@ -1758,59 +1640,16 @@ def Pad(data=None, mode=_Null, pad_width=_Null, constant_value=_Null, out=None, 
     """
     return (0,)
 
-def Pooling(data=None, kernel=_Null, pool_type=_Null, global_pool=_Null, cudnn_off=_Null, pooling_convention=_Null, stride=_Null, pad=_Null, p_value=_Null, count_include_pad=_Null, out=None, name=None, **kwargs):
-    r"""Performs pooling on the input.
+def Pooling(data=None, kernel=_Null, pool_type=_Null, global_pool=_Null, cudnn_off=_Null, pooling_convention=_Null, stride=_Null, pad=_Null, out=None, name=None, **kwargs):
+    r"""Pooling operator for input and output data type of int8.
+    The input and output data comes with min and max thresholds for quantizing
+    the float32 data into int8.
 
-    The shapes for 1-D pooling are
+    .. Note::
+        This operator only supports forward propogation. DO NOT use it in training.
+        This operator only supports `pool_type` of `avg` or `max`.
 
-    - **data**: *(batch_size, channel, width)*,
-    - **out**: *(batch_size, num_filter, out_width)*.
-
-    The shapes for 2-D pooling are
-
-    - **data**: *(batch_size, channel, height, width)*
-    - **out**: *(batch_size, num_filter, out_height, out_width)*, with::
-
-        out_height = f(height, kernel[0], pad[0], stride[0])
-        out_width = f(width, kernel[1], pad[1], stride[1])
-
-    The definition of *f* depends on ``pooling_convention``, which has two options:
-
-    - **valid** (default)::
-
-        f(x, k, p, s) = floor((x+2*p-k)/s)+1
-
-    - **full**, which is compatible with Caffe::
-
-        f(x, k, p, s) = ceil((x+2*p-k)/s)+1
-
-    But ``global_pool`` is set to be true, then do a global pooling, namely reset
-    ``kernel=(height, width)``.
-
-    Three pooling options are supported by ``pool_type``:
-
-    - **avg**: average pooling
-    - **max**: max pooling
-    - **sum**: sum pooling
-    - **lp**: Lp pooling
-
-    For 3-D pooling, an additional *depth* dimension is added before
-    *height*. Namely the input data will have shape *(batch_size, channel, depth,
-    height, width)*.
-
-    Notes on Lp pooling:
-
-    Lp pooling was first introduced by this paper: https://arxiv.org/pdf/1204.3968.pdf.
-    L-1 pooling is simply sum pooling, while L-inf pooling is simply max pooling.
-    We can see that Lp pooling stands between those two, in practice the most common value for p is 2.
-
-    For each window ``X``, the mathematical expression for Lp pooling is:
-
-    :math:`f(X) = \sqrt[p]{\sum_{x}^{X} x^p}`
-
-
-
-    Defined in src/operator/nn/pooling.cc:L379
+    Defined in src/operator/quantization/quantized_pooling.cc:L127
 
     Parameters
     ----------
@@ -1818,22 +1657,18 @@ def Pooling(data=None, kernel=_Null, pool_type=_Null, global_pool=_Null, cudnn_o
         Input data to the pooling operator.
     kernel : Shape(tuple), optional, default=[]
         Pooling kernel size: (y, x) or (d, y, x)
-    pool_type : {'avg', 'lp', 'max', 'sum'},optional, default='max'
+    pool_type : {'avg', 'max', 'sum'},optional, default='max'
         Pooling type to be applied.
     global_pool : boolean, optional, default=0
         Ignore kernel size, do global pooling based on current input feature map. 
     cudnn_off : boolean, optional, default=0
         Turn off cudnn pooling and use MXNet pooling operator. 
-    pooling_convention : {'full', 'same', 'valid'},optional, default='valid'
+    pooling_convention : {'full', 'valid'},optional, default='valid'
         Pooling convention to be applied.
     stride : Shape(tuple), optional, default=[]
         Stride: for pooling (y, x) or (d, y, x). Defaults to 1 for each dimension.
     pad : Shape(tuple), optional, default=[]
         Pad for pooling: (y, x) or (d, y, x). Defaults to no padding.
-    p_value : int or None, optional, default='None'
-        Value of p for Lp pooling, can be 1 or 2, required for Lp Pooling.
-    count_include_pad : boolean or None, optional, default=None
-        Only used for AvgPool, specify whether to count padding elements for averagecalculation. For example, with a 5*5 kernel on a 3*3 corner of a image,the sum of the 9 valid elements will be divided by 25 if this is set to true,or it will be divided by 9 if this is set to false. Defaults to true.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -1914,60 +1749,8 @@ def Pooling_v1(data=None, kernel=_Null, pool_type=_Null, global_pool=_Null, pool
     """
     return (0,)
 
-def RNN(data=None, parameters=None, state=None, state_cell=None, state_size=_Null, num_layers=_Null, bidirectional=_Null, mode=_Null, p=_Null, state_outputs=_Null, projection_size=_Null, lstm_state_clip_min=_Null, lstm_state_clip_max=_Null, lstm_state_clip_nan=_Null, out=None, name=None, **kwargs):
-    r"""Applies recurrent layers to input data. Currently, vanilla RNN, LSTM and GRU are
-    implemented, with both multi-layer and bidirectional support.
-
-    When the input data is of type float32 and the environment variables MXNET_CUDA_ALLOW_TENSOR_CORE
-    and MXNET_CUDA_TENSOR_OP_MATH_ALLOW_CONVERSION are set to 1, this operator will try to use
-    pseudo-float16 precision (float32 math with float16 I/O) precision in order to use
-    Tensor Cores on suitable NVIDIA GPUs. This can sometimes give significant speedups.
-
-    **Vanilla RNN**
-
-    Applies a single-gate recurrent layer to input X. Two kinds of activation function are supported:
-    ReLU and Tanh.
-
-    With ReLU activation function:
-
-    .. math::
-        h_t = relu(W_{ih} * x_t + b_{ih}  +  W_{hh} * h_{(t-1)} + b_{hh})
-
-    With Tanh activtion function:
-
-    .. math::
-        h_t = \tanh(W_{ih} * x_t + b_{ih}  +  W_{hh} * h_{(t-1)} + b_{hh})
-
-    Reference paper: Finding structure in time - Elman, 1988.
-    https://crl.ucsd.edu/~elman/Papers/fsit.pdf
-
-    **LSTM**
-
-    Long Short-Term Memory - Hochreiter, 1997. http://www.bioinf.jku.at/publications/older/2604.pdf
-
-    .. math::
-      \begin{array}{ll}
-                i_t = \mathrm{sigmoid}(W_{ii} x_t + b_{ii} + W_{hi} h_{(t-1)} + b_{hi}) \\
-                f_t = \mathrm{sigmoid}(W_{if} x_t + b_{if} + W_{hf} h_{(t-1)} + b_{hf}) \\
-                g_t = \tanh(W_{ig} x_t + b_{ig} + W_{hc} h_{(t-1)} + b_{hg}) \\
-                o_t = \mathrm{sigmoid}(W_{io} x_t + b_{io} + W_{ho} h_{(t-1)} + b_{ho}) \\
-                c_t = f_t * c_{(t-1)} + i_t * g_t \\
-                h_t = o_t * \tanh(c_t)
-                \end{array}
-
-    **GRU**
-
-    Gated Recurrent Unit - Cho et al. 2014. http://arxiv.org/abs/1406.1078
-
-    The definition of GRU here is slightly different from paper but compatible with CUDNN.
-
-    .. math::
-      \begin{array}{ll}
-                r_t = \mathrm{sigmoid}(W_{ir} x_t + b_{ir} + W_{hr} h_{(t-1)} + b_{hr}) \\
-                z_t = \mathrm{sigmoid}(W_{iz} x_t + b_{iz} + W_{hz} h_{(t-1)} + b_{hz}) \\
-                n_t = \tanh(W_{in} x_t + b_{in} + r_t * (W_{hn} h_{(t-1)}+ b_{hn})) \\
-                h_t = (1 - z_t) * n_t + z_t * h_{(t-1)} \\
-                \end{array}
+def RNN(data=None, parameters=None, state=None, state_cell=None, state_size=_Null, num_layers=_Null, bidirectional=_Null, mode=_Null, p=_Null, state_outputs=_Null, out=None, name=None, **kwargs):
+    r"""Applies a recurrent layer to input.
 
     Parameters
     ----------
@@ -1988,17 +1771,9 @@ def RNN(data=None, parameters=None, state=None, state_cell=None, state_size=_Nul
     mode : {'gru', 'lstm', 'rnn_relu', 'rnn_tanh'}, required
         the type of RNN to compute
     p : float, optional, default=0
-        drop rate of the dropout on the outputs of each RNN layer, except the last layer.
+        Dropout probability, fraction of the input that gets dropped out at training time
     state_outputs : boolean, optional, default=0
         Whether to have the states as symbol outputs.
-    projection_size : int or None, optional, default='None'
-        size of project size
-    lstm_state_clip_min : double or None, optional, default=None
-        Minimum clip value of LSTM states. This option must be used together with lstm_state_clip_max.
-    lstm_state_clip_max : double or None, optional, default=None
-        Maximum clip value of LSTM states. This option must be used together with lstm_state_clip_min.
-    lstm_state_clip_nan : boolean, optional, default=0
-        Whether to stop NaN from propagating in state by clipping it to min/max. If clipping range is not specified, this option is ignored.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2143,7 +1918,7 @@ def Reshape(data=None, shape=_Null, reverse=_Null, target_shape=_Null, keep_high
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L169
+    Defined in src/operator/tensor/matrix_op.cc:L168
 
     Parameters
     ----------
@@ -2764,7 +2539,7 @@ def SoftmaxOutput(data=None, label=None, grad_scale=_Null, ignore_label=_Null, m
     """
     return (0,)
 
-def SpatialTransformer(data=None, loc=None, target_shape=_Null, transform_type=_Null, sampler_type=_Null, cudnn_off=_Null, out=None, name=None, **kwargs):
+def SpatialTransformer(data=None, loc=None, target_shape=_Null, transform_type=_Null, sampler_type=_Null, out=None, name=None, **kwargs):
     r"""Applies a spatial transformer to input feature map.
 
     Parameters
@@ -2779,8 +2554,6 @@ def SpatialTransformer(data=None, loc=None, target_shape=_Null, transform_type=_
         transformation type
     sampler_type : {'bilinear'}, required
         sampling type
-    cudnn_off : boolean or None, optional, default=None
-        whether to turn cudnn off
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2841,9 +2614,9 @@ def UpSampling(*data, **kwargs):
     ----------
     data : NDArray[]
         Array of tensors to upsample
-    scale : int, required
+    scale : int (non-negative), required
         Up sampling scale
-    num_filter : int, optional, default='0'
+    num_filter : int (non-negative), optional, default=0
         Input filter. Only used by bilinear sample_type.
     sample_type : {'bilinear', 'nearest'}, required
         upsampling method
@@ -2873,11 +2646,10 @@ def abs(data=None, out=None, name=None, **kwargs):
 
        - abs(default) = default
        - abs(row_sparse) = row_sparse
-       - abs(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L662
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L460
 
     Parameters
     ----------
@@ -2894,7 +2666,7 @@ def abs(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Null, beta2=_Null, epsilon=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
+def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Null, beta2=_Null, epsilon=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
     r"""Update function for Adam optimizer. Adam is seen as a generalization
     of AdaGrad.
 
@@ -2914,8 +2686,7 @@ def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Nu
      v = beta2*v + (1-beta2)*(grad**2)
      w += - learning_rate * m / (sqrt(v) + epsilon)
 
-    However, if grad's storage type is ``row_sparse``, ``lazy_update`` is True and the storage
-    type of weight is the same as those of m and v,
+    If w, m and v are all of ``row_sparse`` storage type,
     only the row slices whose indices appear in grad.indices are updated (for w, m and v)::
 
      for row in grad.indices:
@@ -2925,7 +2696,7 @@ def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Nu
 
 
 
-    Defined in src/operator/optimizer_op.cc:L495
+    Defined in src/operator/optimizer_op.cc:L454
 
     Parameters
     ----------
@@ -2951,8 +2722,6 @@ def adam_update(weight=None, grad=None, mean=None, var=None, lr=_Null, beta1=_Nu
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse and all of w, m and v have the same stype
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -2975,13 +2744,11 @@ def add_n(*args, **kwargs):
     The storage type of ``add_n`` output depends on storage types of inputs
 
     - add_n(row_sparse, row_sparse, ..) = row_sparse
-    - add_n(default, csr, default) = default
-    - add_n(any input combinations longer than 4 (>4) with at least one default type) = default
-    - otherwise, ``add_n`` falls all inputs back to default storage and generates default storage
+    - otherwise, ``add_n`` generates output with default storage
 
 
 
-    Defined in src/operator/tensor/elemwise_sum.cc:L156
+    Defined in src/operator/tensor/elemwise_sum.cc:L150
 
     Parameters
     ----------
@@ -3066,7 +2833,6 @@ def arcsin(data=None, out=None, name=None, **kwargs):
 
        - arcsin(default) = default
        - arcsin(row_sparse) = row_sparse
-       - arcsin(csr) = csr
 
 
 
@@ -3095,7 +2861,6 @@ def arcsinh(data=None, out=None, name=None, **kwargs):
 
        - arcsinh(default) = default
        - arcsinh(row_sparse) = row_sparse
-       - arcsinh(csr) = csr
 
 
 
@@ -3128,7 +2893,6 @@ def arctan(data=None, out=None, name=None, **kwargs):
 
        - arctan(default) = default
        - arctan(row_sparse) = row_sparse
-       - arctan(csr) = csr
 
 
 
@@ -3157,7 +2921,6 @@ def arctanh(data=None, out=None, name=None, **kwargs):
 
        - arctanh(default) = default
        - arctanh(row_sparse) = row_sparse
-       - arctanh(csr) = csr
 
 
 
@@ -3300,7 +3063,7 @@ def argmin(data=None, axis=_Null, keepdims=_Null, out=None, name=None, **kwargs)
     """
     return (0,)
 
-def argsort(data=None, axis=_Null, is_ascend=_Null, dtype=_Null, out=None, name=None, **kwargs):
+def argsort(data=None, axis=_Null, is_ascend=_Null, out=None, name=None, **kwargs):
     r"""Returns the indices that would sort an input array along the given axis.
 
     This function performs sorting along the given axis and returns an array of indices having same shape
@@ -3323,7 +3086,7 @@ def argsort(data=None, axis=_Null, is_ascend=_Null, dtype=_Null, out=None, name=
       argsort(x) = [ 3.,  1.,  5.,  0.,  4.,  2.]
 
 
-    Defined in src/operator/tensor/ordering_op.cc:L177
+    Defined in src/operator/tensor/ordering_op.cc:L176
 
     Parameters
     ----------
@@ -3333,8 +3096,6 @@ def argsort(data=None, axis=_Null, is_ascend=_Null, dtype=_Null, out=None, name=
         Axis along which to sort the input tensor. If not given, the flattened array is used. Default is -1.
     is_ascend : boolean, optional, default=1
         Whether to sort in ascending or descending order.
-    dtype : {'float16', 'float32', 'float64', 'int32', 'uint8'},optional, default='float32'
-        DType of the output indices. It is only valid when ret_typ is "indices" or "both". An error will be raised if the selected data type cannot precisely represent the indices.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -3346,7 +3107,7 @@ def argsort(data=None, axis=_Null, is_ascend=_Null, dtype=_Null, out=None, name=
     """
     return (0,)
 
-def batch_dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_stype=_Null, out=None, name=None, **kwargs):
+def batch_dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, out=None, name=None, **kwargs):
     r"""Batchwise dot product.
 
     ``batch_dot`` is used to compute dot product of ``x`` and ``y`` when ``x`` and
@@ -3360,7 +3121,7 @@ def batch_dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_
 
 
 
-    Defined in src/operator/tensor/dot.cc:L125
+    Defined in src/operator/tensor/dot.cc:L110
 
     Parameters
     ----------
@@ -3372,8 +3133,6 @@ def batch_dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_
         If true then transpose the first input before dot.
     transpose_b : boolean, optional, default=0
         If true then transpose the second input before dot.
-    forward_stype : {None, 'csr', 'default', 'row_sparse'},optional, default='None'
-        The desired storage type of the forward output given by user, if thecombination of input storage types and this hint does not matchany implemented ones, the dot operator will perform fallback operationand still produce an output of the desired storage type.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -3407,7 +3166,7 @@ def batch_take(a=None, indices=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/indexing_op.cc:L750
+    Defined in src/operator/tensor/indexing_op.cc:L434
 
     Parameters
     ----------
@@ -3445,14 +3204,9 @@ def broadcast_add(lhs=None, rhs=None, out=None, name=None, **kwargs):
        broadcast_plus(x, y) = [[ 1.,  1.,  1.],
                                [ 2.,  2.,  2.]]
 
-    Supported sparse operations:
-
-       broadcast_add(csr, dense(1D)) = dense
-       broadcast_add(dense(1D), csr) = dense
 
 
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L58
+    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L51
 
     Parameters
     ----------
@@ -3493,7 +3247,7 @@ def broadcast_axes(data=None, axis=_Null, size=_Null, out=None, name=None, **kwa
                                                      [ 2.,  2.,  2.]]]
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L238
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L208
 
     Parameters
     ----------
@@ -3536,7 +3290,7 @@ def broadcast_axis(data=None, axis=_Null, size=_Null, out=None, name=None, **kwa
                                                      [ 2.,  2.,  2.]]]
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L238
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L208
 
     Parameters
     ----------
@@ -3572,12 +3326,11 @@ def broadcast_div(lhs=None, rhs=None, out=None, name=None, **kwargs):
                               [ 2.,  2.,  2.]]
 
     Supported sparse operations:
-
-       broadcast_div(csr, dense(1D)) = csr
-
+       broadcast_div(csr, dense(1D)) = csr (CPU only)
 
 
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L187
+
+    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L165
 
     Parameters
     ----------
@@ -3814,153 +3567,6 @@ def broadcast_lesser_equal(lhs=None, rhs=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def broadcast_like(lhs=None, rhs=None, lhs_axes=_Null, rhs_axes=_Null, out=None, name=None, **kwargs):
-    r"""Broadcasts lhs to have the same shape as rhs.
-
-    Broadcasting is a mechanism that allows NDArrays to perform arithmetic operations
-    with arrays of different shapes efficiently without creating multiple copies of arrays.
-    Also see, `Broadcasting <https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`_ for more explanation.
-
-    Broadcasting is allowed on axes with size 1, such as from `(2,1,3,1)` to
-    `(2,8,3,9)`. Elements will be duplicated on the broadcasted axes.
-
-    For example::
-
-       broadcast_like([[1,2,3]], [[5,6,7],[7,8,9]]) = [[ 1.,  2.,  3.],
-                                                       [ 1.,  2.,  3.]])
-
-       broadcast_like([9], [1,2,3,4,5], lhs_axes=(0,), rhs_axes=(-1,)) = [9,9,9,9,9]
-
-
-
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L315
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input.
-    rhs : NDArray
-        Second input.
-    lhs_axes : Shape or None, optional, default=None
-        Axes to perform broadcast on in the first input array
-    rhs_axes : Shape or None, optional, default=None
-        Axes to copy from the second input array
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_logical_and(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns the result of element-wise **logical and** with broadcasting.
-
-    Example::
-
-       x = [[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]]
-
-       y = [[ 0.],
-            [ 1.]]
-
-       broadcast_logical_and(x, y) = [[ 0.,  0.,  0.],
-                                      [ 1.,  1.,  1.]]
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_logic.cc:L154
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_logical_or(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns the result of element-wise **logical or** with broadcasting.
-
-    Example::
-
-       x = [[ 1.,  1.,  0.],
-            [ 1.,  1.,  0.]]
-
-       y = [[ 1.],
-            [ 0.]]
-
-       broadcast_logical_or(x, y) = [[ 1.,  1.,  1.],
-                                     [ 1.,  1.,  0.]]
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_logic.cc:L172
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def broadcast_logical_xor(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Returns the result of element-wise **logical xor** with broadcasting.
-
-    Example::
-
-       x = [[ 1.,  1.,  0.],
-            [ 1.,  1.,  0.]]
-
-       y = [[ 1.],
-            [ 0.]]
-
-       broadcast_logical_xor(x, y) = [[ 0.,  0.,  1.],
-                                      [ 1.,  1.,  0.]]
-
-
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_logic.cc:L190
-
-    Parameters
-    ----------
-    lhs : NDArray
-        First input to the function
-    rhs : NDArray
-        Second input to the function
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def broadcast_maximum(lhs=None, rhs=None, out=None, name=None, **kwargs):
     r"""Returns element-wise maximum of the input arrays with broadcasting.
 
@@ -4054,14 +3660,9 @@ def broadcast_minus(lhs=None, rhs=None, out=None, name=None, **kwargs):
        broadcast_minus(x, y) = [[ 1.,  1.,  1.],
                                 [ 0.,  0.,  0.]]
 
-    Supported sparse operations:
-
-       broadcast_sub/minus(csr, dense(1D)) = dense
-       broadcast_sub/minus(dense(1D), csr) = dense
 
 
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L106
+    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L90
 
     Parameters
     ----------
@@ -4096,7 +3697,7 @@ def broadcast_mod(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L222
+    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L200
 
     Parameters
     ----------
@@ -4130,12 +3731,11 @@ def broadcast_mul(lhs=None, rhs=None, out=None, name=None, **kwargs):
                               [ 1.,  1.,  1.]]
 
     Supported sparse operations:
-
-       broadcast_mul(csr, dense(1D)) = csr
-
+       broadcast_mul(csr, dense(1D)) = csr (CPU only)
 
 
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L146
+
+    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L126
 
     Parameters
     ----------
@@ -4208,14 +3808,9 @@ def broadcast_plus(lhs=None, rhs=None, out=None, name=None, **kwargs):
        broadcast_plus(x, y) = [[ 1.,  1.,  1.],
                                [ 2.,  2.,  2.]]
 
-    Supported sparse operations:
-
-       broadcast_add(csr, dense(1D)) = dense
-       broadcast_add(dense(1D), csr) = dense
 
 
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L58
+    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L51
 
     Parameters
     ----------
@@ -4288,14 +3883,9 @@ def broadcast_sub(lhs=None, rhs=None, out=None, name=None, **kwargs):
        broadcast_minus(x, y) = [[ 1.,  1.,  1.],
                                 [ 0.,  0.,  0.]]
 
-    Supported sparse operations:
-
-       broadcast_sub/minus(csr, dense(1D)) = dense
-       broadcast_sub/minus(dense(1D), csr) = dense
 
 
-
-    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L106
+    Defined in src/operator/tensor/elemwise_binary_broadcast_op_basic.cc:L90
 
     Parameters
     ----------
@@ -4334,7 +3924,7 @@ def broadcast_to(data=None, shape=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L262
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L232
 
     Parameters
     ----------
@@ -4366,7 +3956,7 @@ def cast(data=None, dtype=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L596
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L385
 
     Parameters
     ----------
@@ -4453,15 +4043,9 @@ def cbrt(data=None, out=None, name=None, **kwargs):
 
        cbrt([1, 8, -125]) = [1, 2, -5]
 
-    The storage type of ``cbrt`` output depends upon the input storage type:
-
-       - cbrt(default) = default
-       - cbrt(row_sparse) = row_sparse
-       - cbrt(csr) = csr
 
 
-
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L883
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L676
 
     Parameters
     ----------
@@ -4491,11 +4075,10 @@ def ceil(data=None, out=None, name=None, **kwargs):
 
        - ceil(default) = default
        - ceil(row_sparse) = row_sparse
-       - ceil(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L740
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L538
 
     Parameters
     ----------
@@ -4559,7 +4142,7 @@ def clip(data=None, a_min=_Null, a_max=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L619
+    Defined in src/operator/tensor/matrix_op.cc:L617
 
     Parameters
     ----------
@@ -4590,11 +4173,6 @@ def concat(*data, **kwargs):
     The dimension of the output array along the concatenated axis will be equal
     to the sum of the corresponding dimensions of the input arrays.
 
-    The storage type of ``concat`` output depends on storage types of inputs
-
-    - concat(csr, csr, ..., csr, dim=0) = csr
-    - otherwise, ``concat`` generates output with default storage
-
     Example::
 
        x = [[1,1],[2,2]]
@@ -4619,7 +4197,7 @@ def concat(*data, **kwargs):
 
 
 
-    Defined in src/operator/nn/concat.cc:L368
+    Defined in src/operator/nn/concat.cc:L235
 
     Parameters
     ----------
@@ -4724,9 +4302,9 @@ def crop(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **k
     - otherwise, ``slice`` generates output with default storage
 
     .. note:: When input data storage type is csr, it only supports
-       step=(), or step=(None,), or step=(1,) to generate a csr output.
-       For other step parameter values, it falls back to slicing
-       a dense tensor.
+    step=(), or step=(None,), or step=(1,) to generate a csr output.
+    For other step parameter values, it falls back to slicing
+    a dense tensor.
 
     Example::
 
@@ -4741,7 +4319,7 @@ def crop(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **k
                                                                 [1.,  3.]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L414
+    Defined in src/operator/tensor/matrix_op.cc:L412
 
     Parameters
     ----------
@@ -4764,83 +4342,6 @@ def crop(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **k
     """
     return (0,)
 
-def ctc_loss(data=None, label=None, data_lengths=None, label_lengths=None, use_data_lengths=_Null, use_label_lengths=_Null, blank_label=_Null, out=None, name=None, **kwargs):
-    r"""Connectionist Temporal Classification Loss.
-
-    .. note:: The existing alias ``contrib_CTCLoss`` is deprecated.
-
-    The shapes of the inputs and outputs:
-
-    - **data**: `(sequence_length, batch_size, alphabet_size)`
-    - **label**: `(batch_size, label_sequence_length)`
-    - **out**: `(batch_size)`
-
-    The `data` tensor consists of sequences of activation vectors (without applying softmax),
-    with i-th channel in the last dimension corresponding to i-th label
-    for i between 0 and alphabet_size-1 (i.e always 0-indexed).
-    Alphabet size should include one additional value reserved for blank label.
-    When `blank_label` is ``"first"``, the ``0``-th channel is be reserved for
-    activation of blank label, or otherwise if it is "last", ``(alphabet_size-1)``-th channel should be
-    reserved for blank label.
-
-    ``label`` is an index matrix of integers. When `blank_label` is ``"first"``,
-    the value 0 is then reserved for blank label, and should not be passed in this matrix. Otherwise,
-    when `blank_label` is ``"last"``, the value `(alphabet_size-1)` is reserved for blank label.
-
-    If a sequence of labels is shorter than *label_sequence_length*, use the special
-    padding value at the end of the sequence to conform it to the correct
-    length. The padding value is `0` when `blank_label` is ``"first"``, and `-1` otherwise.
-
-    For example, suppose the vocabulary is `[a, b, c]`, and in one batch we have three sequences
-    'ba', 'cbb', and 'abac'. When `blank_label` is ``"first"``, we can index the labels as
-    `{'a': 1, 'b': 2, 'c': 3}`, and we reserve the 0-th channel for blank label in data tensor.
-    The resulting `label` tensor should be padded to be::
-
-      [[2, 1, 0, 0], [3, 2, 2, 0], [1, 2, 1, 3]]
-
-    When `blank_label` is ``"last"``, we can index the labels as
-    `{'a': 0, 'b': 1, 'c': 2}`, and we reserve the channel index 3 for blank label in data tensor.
-    The resulting `label` tensor should be padded to be::
-
-      [[1, 0, -1, -1], [2, 1, 1, -1], [0, 1, 0, 2]]
-
-    ``out`` is a list of CTC loss values, one per example in the batch.
-
-    See *Connectionist Temporal Classification: Labelling Unsegmented
-    Sequence Data with Recurrent Neural Networks*, A. Graves *et al*. for more
-    information on the definition and the algorithm.
-
-
-
-    Defined in src/operator/nn/ctc_loss.cc:L100
-
-    Parameters
-    ----------
-    data : NDArray
-        Input ndarray
-    label : NDArray
-        Ground-truth labels for the loss.
-    data_lengths : NDArray
-        Lengths of data for each of the samples. Only required when use_data_lengths is true.
-    label_lengths : NDArray
-        Lengths of labels for each of the samples. Only required when use_label_lengths is true.
-    use_data_lengths : boolean, optional, default=0
-        Whether the data lenghts are decided by `data_lengths`. If false, the lengths are equal to the max sequence length.
-    use_label_lengths : boolean, optional, default=0
-        Whether the label lenghts are decided by `label_lengths`, or derived from `padding_mask`. If false, the lengths are derived from the first occurrence of the value of `padding_mask`. The value of `padding_mask` is ``0`` when first CTC label is reserved for blank, and ``-1`` when last label is reserved for blank. See `blank_label`.
-    blank_label : {'first', 'last'},optional, default='first'
-        Set the label that is reserved for blank label.If "first", 0-th label is reserved, and label values for tokens in the vocabulary are between ``1`` and ``alphabet_size-1``, and the padding mask is ``-1``. If "last", last label value ``alphabet_size-1`` is reserved for blank label instead, and label values for tokens in the vocabulary are between ``0`` and ``alphabet_size-2``, and the padding mask is ``0``.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def degrees(data=None, out=None, name=None, **kwargs):
     r"""Converts each element of the input array from radians to degrees.
 
@@ -4851,7 +4352,6 @@ def degrees(data=None, out=None, name=None, **kwargs):
 
        - degrees(default) = default
        - degrees(row_sparse) = row_sparse
-       - degrees(csr) = csr
 
 
 
@@ -4872,139 +4372,7 @@ def degrees(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def depth_to_space(data=None, block_size=_Null, out=None, name=None, **kwargs):
-    r"""Rearranges(permutes) data from depth into blocks of spatial data.
-    Similar to ONNX DepthToSpace operator:
-    https://github.com/onnx/onnx/blob/master/docs/Operators.md#DepthToSpace.
-    The output is a new tensor where the values from depth dimension are moved in spatial blocks 
-    to height and width dimension. The reverse of this operation is ``space_to_depth``.
-
-    .. math::
-
-        \begin{gather*}
-        x \prime = reshape(x, [N, block\_size, block\_size, C / (block\_size ^ 2), H * block\_size, W * block\_size]) \\
-        x \prime \prime = transpose(x \prime, [0, 3, 4, 1, 5, 2]) \\
-        y = reshape(x \prime \prime, [N, C / (block\_size ^ 2), H * block\_size, W * block\_size])
-        \end{gather*}
-
-    where :math:`x` is an input tensor with default layout as :math:`[N, C, H, W]`: [batch, channels, height, width] 
-    and :math:`y` is the output tensor of layout :math:`[N, C / (block\_size ^ 2), H * block\_size, W * block\_size]`
-
-    Example::
-
-      x = [[[[0, 1, 2],
-             [3, 4, 5]],
-            [[6, 7, 8],
-             [9, 10, 11]],
-            [[12, 13, 14],
-             [15, 16, 17]],
-            [[18, 19, 20],
-             [21, 22, 23]]]]
-
-      depth_to_space(x, 2) = [[[[0, 6, 1, 7, 2, 8],
-                                [12, 18, 13, 19, 14, 20],
-                                [3, 9, 4, 10, 5, 11],
-                                [15, 21, 16, 22, 17, 23]]]]
-
-
-    Defined in src/operator/tensor/matrix_op.cc:L946
-
-    Parameters
-    ----------
-    data : NDArray
-        Input ndarray
-    block_size : int, required
-        Blocks of [block_size. block_size] are moved
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def diag(data=None, k=_Null, axis1=_Null, axis2=_Null, out=None, name=None, **kwargs):
-    r"""Extracts a diagonal or constructs a diagonal array.
-
-    ``diag``'s behavior depends on the input array dimensions:
-
-    - 1-D arrays: constructs a 2-D array with the input as its diagonal, all other elements are zero.
-    - N-D arrays: extracts the diagonals of the sub-arrays with axes specified by ``axis1`` and ``axis2``.
-      The output shape would be decided by removing the axes numbered ``axis1`` and ``axis2`` from the
-      input shape and appending to the result a new axis with the size of the diagonals in question.
-
-      For example, when the input shape is `(2, 3, 4, 5)`, ``axis1`` and ``axis2`` are 0 and 2
-      respectively and ``k`` is 0, the resulting shape would be `(3, 5, 2)`.
-
-    Examples::
-
-      x = [[1, 2, 3],
-           [4, 5, 6]]
-
-      diag(x) = [1, 5]
-
-      diag(x, k=1) = [2, 6]
-
-      diag(x, k=-1) = [4]
-
-      x = [1, 2, 3]
-
-      diag(x) = [[1, 0, 0],
-                 [0, 2, 0],
-                 [0, 0, 3]]
-
-      diag(x, k=1) = [[0, 1, 0],
-                      [0, 0, 2],
-                      [0, 0, 0]]
-
-      diag(x, k=-1) = [[0, 0, 0],
-                       [1, 0, 0],
-                       [0, 2, 0]]
-
-      x = [[[1, 2],
-            [3, 4]],
-
-           [[5, 6],
-            [7, 8]]]
-
-      diag(x) = [[1, 7],
-                 [2, 8]]
-
-      diag(x, k=1) = [[3],
-                      [4]]
-
-      diag(x, axis1=-2, axis2=-1) = [[1, 4],
-                                     [5, 8]]
-
-
-
-    Defined in src/operator/tensor/diag_op.cc:L87
-
-    Parameters
-    ----------
-    data : NDArray
-        Input ndarray
-    k : int, optional, default='0'
-        Diagonal in question. The default is 0. Use k>0 for diagonals above the main diagonal, and k<0 for diagonals below the main diagonal. If input has shape (S0 S1) k must be between -S0 and S1
-    axis1 : int, optional, default='0'
-        The first axis of the sub-arrays of interest. Ignored when the input is a 1-D array.
-    axis2 : int, optional, default='1'
-        The second axis of the sub-arrays of interest. Ignored when the input is a 1-D array.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_stype=_Null, out=None, name=None, **kwargs):
+def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, out=None, name=None, **kwargs):
     r"""Dot product of two arrays.
 
     ``dot``'s behavior depends on the input array dimensions:
@@ -5026,32 +4394,17 @@ def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_stype=
         dot(x,y)[0,0,1,1] = 0
         sum(x[0,0,:]*y[:,1,1]) = 0
 
-    The storage type of ``dot`` output depends on storage types of inputs, transpose option and
-    forward_stype option for output storage type. Implemented sparse operations include:
+    The storage type of ``dot`` output depends on storage types of inputs and transpose options:
 
-    - dot(default, default, transpose_a=True/False, transpose_b=True/False) = default
-    - dot(csr, default, transpose_a=True) = default
-    - dot(csr, default, transpose_a=True) = row_sparse
     - dot(csr, default) = default
+    - dot(csr.T, default) = row_sparse
     - dot(csr, row_sparse) = default
-    - dot(default, csr) = csr (CPU only)
-    - dot(default, csr, forward_stype='default') = default
-    - dot(default, csr, transpose_b=True, forward_stype='default') = default
-
-    If the combination of input storage types and forward_stype does not match any of the
-    above patterns, ``dot`` will fallback and generate output with default storage.
-
-    .. Note::
-
-        If the storage type of the lhs is "csr", the storage type of gradient w.r.t rhs will be
-        "row_sparse". Only a subset of optimizers support sparse gradients, including SGD, AdaGrad
-        and Adam. Note that by default lazy updates is turned on, which may perform differently
-        from standard updates. For more details, please check the Optimization API at:
-        https://mxnet.incubator.apache.org/api/python/optimization/optimization.html
+    - dot(default, csr) = csr
+    - otherwise, ``dot`` generates output with default storage
 
 
 
-    Defined in src/operator/tensor/dot.cc:L77
+    Defined in src/operator/tensor/dot.cc:L62
 
     Parameters
     ----------
@@ -5063,8 +4416,6 @@ def dot(lhs=None, rhs=None, transpose_a=_Null, transpose_b=_Null, forward_stype=
         If true then transpose the first input before dot.
     transpose_b : boolean, optional, default=0
         If true then transpose the second input before dot.
-    forward_stype : {None, 'csr', 'default', 'row_sparse'},optional, default='None'
-        The desired storage type of the forward output given by user, if thecombination of input storage types and this hint does not matchany implemented ones, the dot operator will perform fallback operationand still produce an output of the desired storage type.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -5083,10 +4434,6 @@ def elemwise_add(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_add(row_sparse, row_sparse) = row_sparse
        - elemwise_add(csr, csr) = csr
-       - elemwise_add(default, csr) = default
-       - elemwise_add(csr, default) = default
-       - elemwise_add(default, rsp) = default
-       - elemwise_add(rsp, default) = default
        - otherwise, ``elemwise_add`` generates output with default storage
 
 
@@ -5147,8 +4494,8 @@ def elemwise_mul(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_mul(default, default) = default
        - elemwise_mul(row_sparse, row_sparse) = row_sparse
-       - elemwise_mul(default, row_sparse) = row_sparse
-       - elemwise_mul(row_sparse, default) = row_sparse
+       - elemwise_mul(default, row_sparse) = default
+       - elemwise_mul(row_sparse, default) = default
        - elemwise_mul(csr, csr) = csr
        - otherwise, ``elemwise_mul`` generates output with default storage
 
@@ -5178,10 +4525,6 @@ def elemwise_sub(lhs=None, rhs=None, out=None, name=None, **kwargs):
 
        - elemwise_sub(row_sparse, row_sparse) = row_sparse
        - elemwise_sub(csr, csr) = csr
-       - elemwise_sub(default, csr) = default
-       - elemwise_sub(csr, default) = default
-       - elemwise_sub(default, rsp) = default
-       - elemwise_sub(rsp, default) = default
        - otherwise, ``elemwise_sub`` generates output with default storage
 
 
@@ -5192,32 +4535,6 @@ def elemwise_sub(lhs=None, rhs=None, out=None, name=None, **kwargs):
         first input
     rhs : NDArray
         second input
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def erf(data=None, out=None, name=None, **kwargs):
-    r"""Returns element-wise gauss error function of the input.
-
-    Example::
-
-       erf([0, -1., 10.]) = [0., -0.8427, 1.]
-
-
-
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L897
-
-    Parameters
-    ----------
-    data : NDArray
-        The input array.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -5243,7 +4560,7 @@ def exp(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L939
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L716
 
     Parameters
     ----------
@@ -5268,7 +4585,7 @@ def expand_dims(data=None, axis=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L348
+    Defined in src/operator/tensor/matrix_op.cc:L346
 
     Parameters
     ----------
@@ -5296,11 +4613,10 @@ def expm1(data=None, out=None, name=None, **kwargs):
 
        - expm1(default) = default
        - expm1(row_sparse) = row_sparse
-       - expm1(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L1018
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L795
 
     Parameters
     ----------
@@ -5351,11 +4667,10 @@ def fix(data=None, out=None, name=None, **kwargs):
 
        - fix(default) = default
        - fix(row_sparse) = row_sparse
-       - fix(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L797
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L595
 
     Parameters
     ----------
@@ -5400,7 +4715,7 @@ def flatten(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L259
+    Defined in src/operator/tensor/matrix_op.cc:L258
 
     Parameters
     ----------
@@ -5434,7 +4749,7 @@ def flip(data=None, axis=_Null, out=None, name=None, **kwargs):
                             [ 9.,  8.,  7.,  6.,  5.]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L794
+    Defined in src/operator/tensor/matrix_op.cc:L792
 
     Parameters
     ----------
@@ -5466,11 +4781,10 @@ def floor(data=None, out=None, name=None, **kwargs):
 
        - floor(default) = default
        - floor(row_sparse) = row_sparse
-       - floor(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L759
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L557
 
     Parameters
     ----------
@@ -5487,7 +4801,7 @@ def floor(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def ftml_update(weight=None, grad=None, d=None, v=None, z=None, lr=_Null, beta1=_Null, beta2=_Null, epsilon=_Null, t=_Null, wd=_Null, rescale_grad=_Null, clip_grad=_Null, out=None, name=None, **kwargs):
+def ftml_update(weight=None, grad=None, d=None, v=None, z=None, lr=_Null, beta1=_Null, beta2=_Null, epsilon=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
     r"""The FTML optimizer described in
     *FTML - Follow the Moving Leader in Deep Learning*,
     available at http://proceedings.mlr.press/v70/zheng17a/zheng17a.pdf.
@@ -5503,7 +4817,7 @@ def ftml_update(weight=None, grad=None, d=None, v=None, z=None, lr=_Null, beta1=
 
 
 
-    Defined in src/operator/optimizer_op.cc:L447
+    Defined in src/operator/optimizer_op.cc:L407
 
     Parameters
     ----------
@@ -5518,20 +4832,18 @@ def ftml_update(weight=None, grad=None, d=None, v=None, z=None, lr=_Null, beta1=
     z : NDArray
         Internal state ``z_t``
     lr : float, required
-        Learning rate.
-    beta1 : float, optional, default=0.6
-        Generally close to 0.5.
+        Learning rate
+    beta1 : float, optional, default=0.9
+        The decay rate for the 1st moment estimates.
     beta2 : float, optional, default=0.999
-        Generally close to 1.
-    epsilon : double, optional, default=1e-08
-        Epsilon to prevent div 0.
-    t : int, required
-        Number of update.
+        The decay rate for the 2nd moment estimates.
+    epsilon : float, optional, default=1e-08
+        A small constant for numerical stability.
     wd : float, optional, default=0
         Weight decay augments the objective function with a regularization term that penalizes large weights. The penalty scales with the square of the magnitude of each weight.
     rescale_grad : float, optional, default=1
         Rescale gradient to grad = rescale_grad*grad.
-    clip_grad : float, optional, default=-1
+    clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
 
     out : NDArray, optional
@@ -5567,7 +4879,7 @@ def ftrl_update(weight=None, grad=None, z=None, n=None, lr=_Null, lamda1=_Null, 
 
 
 
-    Defined in src/operator/optimizer_op.cc:L632
+    Defined in src/operator/optimizer_op.cc:L591
 
     Parameters
     ----------
@@ -5669,10 +4981,6 @@ def gather_nd(data=None, indices=None, out=None, name=None, **kwargs):
       indices = [[1, 1, 0], [0, 1, 0]]
       gather_nd(data, indices) = [2, 3, 0]
 
-      data = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
-      indices = [[0, 1], [1, 0]]
-      gather_nd(data, indices) = [[3, 4], [5, 6]]
-
 
 
     Parameters
@@ -5692,39 +5000,10 @@ def gather_nd(data=None, indices=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def hard_sigmoid(data=None, alpha=_Null, beta=_Null, out=None, name=None, **kwargs):
-    r"""Computes hard sigmoid of x element-wise.
-
-    .. math::
-       y = max(0, min(1, alpha * x + beta))
-
-
-
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L115
-
-    Parameters
-    ----------
-    data : NDArray
-        The input array.
-    alpha : float, optional, default=0.2
-        Slope of hard sigmoid
-    beta : float, optional, default=0.5
-        Bias of hard sigmoid.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def identity(data=None, out=None, name=None, **kwargs):
     r"""Returns a copy of the input.
 
-    From:src/operator/tensor/elemwise_unary_op_basic.cc:200
+    From:src/operator/tensor/elemwise_unary_op_basic.cc:176
 
     Parameters
     ----------
@@ -5840,7 +5119,7 @@ def linalg_gelqf(A=None, out=None, name=None, **kwargs):
              [-19.09768702, 0.52758934]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L569
+    Defined in src/operator/tensor/la_op.cc:L529
 
     Parameters
     ----------
@@ -5857,7 +5136,7 @@ def linalg_gelqf(A=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def linalg_gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, beta=_Null, axis=_Null, out=None, name=None, **kwargs):
+def linalg_gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, beta=_Null, out=None, name=None, **kwargs):
     r"""Performs general matrix multiplication and accumulation.
     Input are tensors *A*, *B*, *C*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
@@ -5869,25 +5148,8 @@ def linalg_gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, al
     Here, *alpha* and *beta* are scalar parameters, and *op()* is either the identity or
     matrix transposition (depending on *transpose_a*, *transpose_b*).
 
-    If *n>2*, *gemm* is performed separately for a batch of matrices. The column indices of the matrices
-    are given by the last dimensions of the tensors, the row indices by the axis specified with the *axis* 
-    parameter. By default, the trailing two dimensions will be used for matrix encoding.
-
-    For a non-default axis parameter, the operation performed is equivalent to a series of swapaxes/gemm/swapaxes
-    calls. For example let *A*, *B*, *C* be 5 dimensional tensors. Then gemm(*A*, *B*, *C*, axis=1) is equivalent to
-
-        A1 = swapaxes(A, dim1=1, dim2=3)
-        B1 = swapaxes(B, dim1=1, dim2=3)
-        C = swapaxes(C, dim1=1, dim2=3)
-        C = gemm(A1, B1, C)
-        C = swapaxis(C, dim1=1, dim2=3)
-
-    without the overhead of the additional swapaxis operations.
-
-    When the input data is of type float32 and the environment variables MXNET_CUDA_ALLOW_TENSOR_CORE
-    and MXNET_CUDA_TENSOR_OP_MATH_ALLOW_CONVERSION are set to 1, this operator will try to use
-    pseudo-float16 precision (float32 math with float16 I/O) precision in order to use
-    Tensor Cores on suitable NVIDIA GPUs. This can sometimes give significant speedups.
+    If *n>2*, *gemm* is performed separately on the trailing two dimensions for all inputs
+    (batch mode).
 
     .. note:: The operator supports float32 and float64 data types only.
 
@@ -5908,7 +5170,7 @@ def linalg_gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, al
                = [[[104.0]], [[0.14]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L87
+    Defined in src/operator/tensor/la_op.cc:L69
 
     Parameters
     ----------
@@ -5926,8 +5188,6 @@ def linalg_gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, al
         Scalar factor multiplied with A*B.
     beta : double, optional, default=1
         Scalar factor multiplied with C.
-    axis : int, optional, default='-2'
-        Axis corresponding to the matrix rows.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -5939,7 +5199,7 @@ def linalg_gemm(A=None, B=None, C=None, transpose_a=_Null, transpose_b=_Null, al
     """
     return (0,)
 
-def linalg_gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, axis=_Null, out=None, name=None, **kwargs):
+def linalg_gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Null, out=None, name=None, **kwargs):
     r"""Performs general matrix multiplication.
     Input are tensors *A*, *B*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
@@ -5951,24 +5211,8 @@ def linalg_gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Nu
     Here *alpha* is a scalar parameter and *op()* is either the identity or the matrix
     transposition (depending on *transpose_a*, *transpose_b*).
 
-    If *n>2*, *gemm* is performed separately for a batch of matrices. The column indices of the matrices
-    are given by the last dimensions of the tensors, the row indices by the axis specified with the *axis* 
-    parameter. By default, the trailing two dimensions will be used for matrix encoding.
-
-    For a non-default axis parameter, the operation performed is equivalent to a series of swapaxes/gemm/swapaxes
-    calls. For example let *A*, *B* be 5 dimensional tensors. Then gemm(*A*, *B*, axis=1) is equivalent to
-
-        A1 = swapaxes(A, dim1=1, dim2=3)
-        B1 = swapaxes(B, dim1=1, dim2=3)
-        C = gemm2(A1, B1)
-        C = swapaxis(C, dim1=1, dim2=3)
-
-    without the overhead of the additional swapaxis operations.
-
-    When the input data is of type float32 and the environment variables MXNET_CUDA_ALLOW_TENSOR_CORE
-    and MXNET_CUDA_TENSOR_OP_MATH_ALLOW_CONVERSION are set to 1, this operator will try to use
-    pseudo-float16 precision (float32 math with float16 I/O) precision in order to use
-    Tensor Cores on suitable NVIDIA GPUs. This can sometimes give significant speedups.
+    If *n>2*, *gemm* is performed separately on the trailing two dimensions for all inputs
+    (batch mode).
 
     .. note:: The operator supports float32 and float64 data types only.
 
@@ -5987,7 +5231,7 @@ def linalg_gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Nu
                = [[[4.0]], [[0.04 ]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L162
+    Defined in src/operator/tensor/la_op.cc:L128
 
     Parameters
     ----------
@@ -6001,8 +5245,6 @@ def linalg_gemm2(A=None, B=None, transpose_a=_Null, transpose_b=_Null, alpha=_Nu
         Multiply with transposed of second input (B).
     alpha : double, optional, default=1
         Scalar factor multiplied with A*B.
-    axis : int, optional, default='-2'
-        Axis corresponding to the matrix row indices.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -6018,12 +5260,11 @@ def linalg_potrf(A=None, out=None, name=None, **kwargs):
     r"""Performs Cholesky factorization of a symmetric positive-definite matrix.
     Input is a tensor *A* of dimension *n >= 2*.
 
-    If *n=2*, the Cholesky factor *B* of the symmetric, positive definite matrix *A* is
-    computed. *B* is triangular (entries of upper or lower triangle are all zero), has
+    If *n=2*, the Cholesky factor *L* of the symmetric, positive definite matrix *A* is
+    computed. *L* is lower triangular (entries of upper triangle are all zero), has
     positive diagonal entries, and:
 
-      *A* = *B* \* *B*\ :sup:`T`  if *lower* = *true*
-      *A* = *B*\ :sup:`T` \* *B*  if *lower* = *false*
+      *A* = *L* \* *L*\ :sup:`T`
 
     If *n>2*, *potrf* is performed separately on the trailing two dimensions for all inputs
     (batch mode).
@@ -6041,7 +5282,7 @@ def linalg_potrf(A=None, out=None, name=None, **kwargs):
        potrf(A) = [[[2.0, 0], [0.5, 2.0]], [[4.0, 0], [1.0, 4.0]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L213
+    Defined in src/operator/tensor/la_op.cc:L178
 
     Parameters
     ----------
@@ -6062,11 +5303,10 @@ def linalg_potri(A=None, out=None, name=None, **kwargs):
     r"""Performs matrix inversion from a Cholesky factorization.
     Input is a tensor *A* of dimension *n >= 2*.
 
-    If *n=2*, *A* is a triangular matrix (entries of upper or lower triangle are all zero)
+    If *n=2*, *A* is a lower triangular matrix (entries of upper triangle are all zero)
     with positive diagonal. We compute:
 
-      *out* = *A*\ :sup:`-T` \* *A*\ :sup:`-1` if *lower* = *true*
-      *out* = *A*\ :sup:`-1` \* *A*\ :sup:`-T` if *lower* = *false*
+      *out* = *A*\ :sup:`-T` \* *A*\ :sup:`-1`
 
     In other words, if *A* is the Cholesky factor of a symmetric positive definite matrix
     *B* (obtained by *potrf*), then
@@ -6094,7 +5334,7 @@ def linalg_potri(A=None, out=None, name=None, **kwargs):
                    [[0.06641, -0.01562], [-0.01562, 0,0625]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L274
+    Defined in src/operator/tensor/la_op.cc:L236
 
     Parameters
     ----------
@@ -6134,7 +5374,7 @@ def linalg_sumlogdiag(A=None, out=None, name=None, **kwargs):
        sumlogdiag(A) = [1.9459, 3.9318]
 
 
-    Defined in src/operator/tensor/la_op.cc:L445
+    Defined in src/operator/tensor/la_op.cc:L405
 
     Parameters
     ----------
@@ -6187,7 +5427,7 @@ def linalg_syrk(A=None, transpose=_Null, alpha=_Null, out=None, name=None, **kwa
        syrk(A, alpha=2., transpose=False) = [[[4.]], [[0.04]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L501
+    Defined in src/operator/tensor/la_op.cc:L461
 
     Parameters
     ----------
@@ -6208,12 +5448,12 @@ def linalg_syrk(A=None, transpose=_Null, alpha=_Null, out=None, name=None, **kwa
     """
     return (0,)
 
-def linalg_trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_Null, out=None, name=None, **kwargs):
+def linalg_trmm(A=None, B=None, transpose=_Null, rightside=_Null, alpha=_Null, out=None, name=None, **kwargs):
     r"""Performs multiplication with a lower triangular matrix.
     Input are tensors *A*, *B*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
 
-    If *n=2*, *A* must be triangular. The operator performs the BLAS3 function
+    If *n=2*, *A* must be lower triangular. The operator performs the BLAS3 function
     *trmm*:
 
        *out* = *alpha* \* *op*\ (*A*) \* *B*
@@ -6245,7 +5485,7 @@ def linalg_trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, a
                                 [[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L333
+    Defined in src/operator/tensor/la_op.cc:L293
 
     Parameters
     ----------
@@ -6257,8 +5497,6 @@ def linalg_trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, a
         Use transposed of the triangular matrix
     rightside : boolean, optional, default=0
         Multiply triangular matrix from the right to non-triangular one.
-    lower : boolean, optional, default=1
-        True if the triangular matrix is lower triangular, false if it is upper triangular.
     alpha : double, optional, default=1
         Scalar factor to be applied to the result.
 
@@ -6272,12 +5510,12 @@ def linalg_trmm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, a
     """
     return (0,)
 
-def linalg_trsm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, alpha=_Null, out=None, name=None, **kwargs):
+def linalg_trsm(A=None, B=None, transpose=_Null, rightside=_Null, alpha=_Null, out=None, name=None, **kwargs):
     r"""Solves matrix equation involving a lower triangular matrix.
     Input are tensors *A*, *B*, each of dimension *n >= 2* and having the same shape
     on the leading *n-2* dimensions.
 
-    If *n=2*, *A* must be triangular. The operator performs the BLAS3 function
+    If *n=2*, *A* must be lower triangular. The operator performs the BLAS3 function
     *trsm*, solving for *out* in:
 
        *op*\ (*A*) \* *out* = *alpha* \* *B*
@@ -6309,7 +5547,7 @@ def linalg_trsm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, a
                                 [[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]]
 
 
-    Defined in src/operator/tensor/la_op.cc:L396
+    Defined in src/operator/tensor/la_op.cc:L356
 
     Parameters
     ----------
@@ -6321,8 +5559,6 @@ def linalg_trsm(A=None, B=None, transpose=_Null, rightside=_Null, lower=_Null, a
         Use transposed of the triangular matrix
     rightside : boolean, optional, default=0
         Multiply triangular matrix from the right to non-triangular one.
-    lower : boolean, optional, default=1
-        True if the triangular matrix is lower triangular, false if it is upper triangular.
     alpha : double, optional, default=1
         Scalar factor to be applied to the result.
 
@@ -6345,7 +5581,7 @@ def log(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L951
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L728
 
     Parameters
     ----------
@@ -6371,7 +5607,7 @@ def log10(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L963
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L740
 
     Parameters
     ----------
@@ -6398,11 +5634,10 @@ def log1p(data=None, out=None, name=None, **kwargs):
 
        - log1p(default) = default
        - log1p(row_sparse) = row_sparse
-       - log1p(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L1000
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L777
 
     Parameters
     ----------
@@ -6428,7 +5663,7 @@ def log2(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L975
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L752
 
     Parameters
     ----------
@@ -6445,7 +5680,7 @@ def log2(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def log_softmax(data=None, axis=_Null, temperature=_Null, out=None, name=None, **kwargs):
+def log_softmax(data=None, axis=_Null, out=None, name=None, **kwargs):
     r"""Computes the log softmax of the input.
     This is equivalent to computing softmax followed by log.
 
@@ -6469,31 +5704,6 @@ def log_softmax(data=None, axis=_Null, temperature=_Null, out=None, name=None, *
         The input array.
     axis : int, optional, default='-1'
         The axis along which to compute softmax.
-    temperature : double or None, optional, default=None
-        Temperature parameter in softmax
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def logical_not(data=None, out=None, name=None, **kwargs):
-    r"""Returns the result of logical NOT (!) function
-
-    Example:
-      logical_not([-2., 0., 1.]) = [0., 1., 0.]
-
-
-
-    Parameters
-    ----------
-    data : NDArray
-        The input array.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -6529,7 +5739,7 @@ def make_loss(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L300
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L274
 
     Parameters
     ----------
@@ -6549,7 +5759,7 @@ def make_loss(data=None, out=None, name=None, **kwargs):
 def max(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=None, **kwargs):
     r"""Computes the max of array elements over given axes.
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L191
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L161
 
     Parameters
     ----------
@@ -6588,7 +5798,7 @@ def max(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
 def max_axis(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=None, **kwargs):
     r"""Computes the max of array elements over given axes.
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L191
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L161
 
     Parameters
     ----------
@@ -6627,7 +5837,7 @@ def max_axis(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, nam
 def mean(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=None, **kwargs):
     r"""Computes the mean of array elements over given axes.
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L132
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L102
 
     Parameters
     ----------
@@ -6666,7 +5876,7 @@ def mean(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=No
 def min(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=None, **kwargs):
     r"""Computes the min of array elements over given axes.
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L205
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L175
 
     Parameters
     ----------
@@ -6705,7 +5915,7 @@ def min(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
 def min_axis(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=None, **kwargs):
     r"""Computes the min of array elements over given axes.
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L205
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L175
 
     Parameters
     ----------
@@ -6741,7 +5951,7 @@ def min_axis(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, nam
     """
     return (0,)
 
-def mp_sgd_mom_update(weight=None, grad=None, mom=None, weight32=None, lr=_Null, momentum=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
+def mp_sgd_mom_update(weight=None, grad=None, mom=None, weight32=None, lr=_Null, momentum=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
     r"""Updater function for multi-precision sgd optimizer
 
     Parameters
@@ -6764,8 +5974,6 @@ def mp_sgd_mom_update(weight=None, grad=None, mom=None, weight32=None, lr=_Null,
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse and both weight and momentum have the same stype
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -6777,7 +5985,7 @@ def mp_sgd_mom_update(weight=None, grad=None, mom=None, weight32=None, lr=_Null,
     """
     return (0,)
 
-def mp_sgd_update(weight=None, grad=None, weight32=None, lr=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
+def mp_sgd_update(weight=None, grad=None, weight32=None, lr=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
     r"""Updater function for multi-precision sgd optimizer
 
     Parameters
@@ -6796,8 +6004,6 @@ def mp_sgd_update(weight=None, grad=None, weight32=None, lr=_Null, wd=_Null, res
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -6814,7 +6020,7 @@ def nanprod(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L177
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L147
 
     Parameters
     ----------
@@ -6855,7 +6061,7 @@ def nansum(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L162
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L132
 
     Parameters
     ----------
@@ -6922,20 +6128,14 @@ def norm(data=None, ord=_Null, axis=_Null, keepdims=_Null, out=None, name=None, 
 
     This operator computes the norm on an NDArray with the specified axis, depending
     on the value of the ord parameter. By default, it computes the L2 norm on the entire
-    array. Currently only ord=2 supports sparse ndarrays.
+    array.
 
     Examples::
 
-      x = [[[1, 2],
-            [3, 4]],
-           [[2, 2],
-            [5, 6]]]
+      x = [[1, 2],
+           [3, 4]]
 
-      norm(x, ord=2, axis=1) = [[3.1622777 4.472136 ]
-                                [5.3851647 6.3245554]]
-
-      norm(x, ord=1, axis=1) = [[4., 6.],
-                                [7., 8.]]
+      norm(x) = [5.47722578]
 
       rsp = x.cast_storage('row_sparse')
 
@@ -6947,14 +6147,14 @@ def norm(data=None, ord=_Null, axis=_Null, keepdims=_Null, out=None, name=None, 
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L350
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L271
 
     Parameters
     ----------
     data : NDArray
         The input
     ord : int, optional, default='2'
-        Order of the norm. Currently ord=1 and ord=2 is supported.
+        Order of the norm. Currently ord=2 is supported.
     axis : Shape or None, optional, default=None
         The axis or axes along which to perform the reduction.
           The default, `axis=()`, will compute over all elements into a
@@ -6980,8 +6180,7 @@ def normal(loc=_Null, scale=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None
 
     .. note:: The existing alias ``normal`` is deprecated.
 
-    Samples are distributed according to a normal distribution parametrized by *loc* (mean) and *scale*
-    (standard deviation).
+    Samples are distributed according to a normal distribution parametrized by *loc* (mean) and *scale* (standard deviation).
 
     Example::
 
@@ -6989,7 +6188,7 @@ def normal(loc=_Null, scale=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None
                                               [-1.23474145,  1.55807114]]
 
 
-    Defined in src/operator/random/sample_op.cc:L113
+    Defined in src/operator/random/sample_op.cc:L85
 
     Parameters
     ----------
@@ -7049,7 +6248,7 @@ def one_hot(indices=None, depth=_Null, on_value=_Null, off_value=_Null, dtype=_N
                                           [ 1.  0.  0.]]]
 
 
-    Defined in src/operator/tensor/indexing_op.cc:L796
+    Defined in src/operator/tensor/indexing_op.cc:L480
 
     Parameters
     ----------
@@ -7210,7 +6409,7 @@ def pad(data=None, mode=_Null, pad_width=_Null, constant_value=_Null, out=None, 
     """
     return (0,)
 
-def pick(data=None, index=None, axis=_Null, keepdims=_Null, mode=_Null, out=None, name=None, **kwargs):
+def pick(data=None, index=None, axis=_Null, keepdims=_Null, out=None, name=None, **kwargs):
     r"""Picks elements from an input array according to the input indices along the given axis.
 
     Given an input array of shape ``(d0, d1)`` and indices of shape ``(i0,)``, the result will be
@@ -7239,14 +6438,6 @@ def pick(data=None, index=None, axis=_Null, keepdims=_Null, mode=_Null, out=None
            [ 0.],
            [ 2.]]
 
-      // picks elements with specified indices along axis 1 using 'wrap' mode
-      // to place indicies that would normally be out of bounds
-      pick(x, y=[2,-1,-2], 1, mode='wrap') = [ 1.,  4.,  5.]
-
-      y = [[ 1.],
-           [ 0.],
-           [ 2.]]
-
       // picks elements with specified indices along axis 1 and dims are maintained
       pick(x,y, 1, keepdims=True) = [[ 2.],
                                      [ 3.],
@@ -7254,7 +6445,7 @@ def pick(data=None, index=None, axis=_Null, keepdims=_Null, mode=_Null, out=None
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_index.cc:L153
+    Defined in src/operator/tensor/broadcast_reduce_op_index.cc:L145
 
     Parameters
     ----------
@@ -7262,12 +6453,10 @@ def pick(data=None, index=None, axis=_Null, keepdims=_Null, mode=_Null, out=None
         The input array
     index : NDArray
         The index array
-    axis : int or None, optional, default='-1'
-        int or None. The axis to picking the elements. Negative values means indexing from right to left. If is `None`, the elements in the index w.r.t the flattened input will be picked.
+    axis : int or None, optional, default='None'
+        The axis along which to perform the reduction. Negative values means indexing from right to left. ``Requires axis to be set as int, because global reduction is not supported yet.``
     keepdims : boolean, optional, default=0
-        If true, the axis where we pick the elements is left in the result as dimension with size one.
-    mode : {'clip', 'wrap'},optional, default='clip'
-        Specify how out-of-bound indices behave. Default is "clip". "clip" means clip to the range. So, if all indices mentioned are too large, they are replaced by the index that addresses the last element along an axis.  "wrap" means to wrap around.
+        If this is set to `True`, the reduced axis is left in the result as dimension with size one.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -7282,7 +6471,7 @@ def pick(data=None, index=None, axis=_Null, keepdims=_Null, mode=_Null, out=None
 def prod(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=None, **kwargs):
     r"""Computes the product of array elements over given axes.
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L147
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L117
 
     Parameters
     ----------
@@ -7328,7 +6517,6 @@ def radians(data=None, out=None, name=None, **kwargs):
 
        - radians(default) = default
        - radians(row_sparse) = row_sparse
-       - radians(csr) = csr
 
 
 
@@ -7360,7 +6548,7 @@ def random_exponential(lam=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None,
                                           [ 0.04146638,  0.31715935]]
 
 
-    Defined in src/operator/random/sample_op.cc:L137
+    Defined in src/operator/random/sample_op.cc:L115
 
     Parameters
     ----------
@@ -7394,7 +6582,7 @@ def random_gamma(alpha=_Null, beta=_Null, shape=_Null, ctx=_Null, dtype=_Null, o
                                                 [ 3.91697288,  3.65933681]]
 
 
-    Defined in src/operator/random/sample_op.cc:L125
+    Defined in src/operator/random/sample_op.cc:L100
 
     Parameters
     ----------
@@ -7433,7 +6621,7 @@ def random_generalized_negative_binomial(mu=_Null, alpha=_Null, shape=_Null, ctx
                                                                         [ 6.,  4.]]
 
 
-    Defined in src/operator/random/sample_op.cc:L179
+    Defined in src/operator/random/sample_op.cc:L168
 
     Parameters
     ----------
@@ -7471,7 +6659,7 @@ def random_negative_binomial(k=_Null, p=_Null, shape=_Null, ctx=_Null, dtype=_Nu
                                                      [ 2.,  5.]]
 
 
-    Defined in src/operator/random/sample_op.cc:L164
+    Defined in src/operator/random/sample_op.cc:L149
 
     Parameters
     ----------
@@ -7501,8 +6689,7 @@ def random_normal(loc=_Null, scale=_Null, shape=_Null, ctx=_Null, dtype=_Null, o
 
     .. note:: The existing alias ``normal`` is deprecated.
 
-    Samples are distributed according to a normal distribution parametrized by *loc* (mean) and *scale*
-    (standard deviation).
+    Samples are distributed according to a normal distribution parametrized by *loc* (mean) and *scale* (standard deviation).
 
     Example::
 
@@ -7510,7 +6697,7 @@ def random_normal(loc=_Null, scale=_Null, shape=_Null, ctx=_Null, dtype=_Null, o
                                               [-1.23474145,  1.55807114]]
 
 
-    Defined in src/operator/random/sample_op.cc:L113
+    Defined in src/operator/random/sample_op.cc:L85
 
     Parameters
     ----------
@@ -7547,7 +6734,7 @@ def random_poisson(lam=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, nam
                                       [ 4.,  6.]]
 
 
-    Defined in src/operator/random/sample_op.cc:L150
+    Defined in src/operator/random/sample_op.cc:L132
 
     Parameters
     ----------
@@ -7559,44 +6746,6 @@ def random_poisson(lam=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, nam
         Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
     dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
         DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def random_randint(low=_Null, high=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None, name=None, **kwargs):
-    r"""Draw random samples from a discrete uniform distribution.
-
-    Samples are uniformly distributed over the half-open interval *[low, high)*
-    (includes *low*, but excludes *high*).
-
-    Example::
-
-       randint(low=0, high=5, shape=(2,2)) = [[ 0,  2],
-                                              [ 3,  1]]
-
-
-
-    Defined in src/operator/random/sample_op.cc:L193
-
-    Parameters
-    ----------
-    low : , required
-        Lower bound of the distribution.
-    high : , required
-        Upper bound of the distribution.
-    shape : Shape(tuple), optional, default=[]
-        Shape of the output.
-    ctx : string, optional, default=''
-        Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
-    dtype : {'None', 'int32', 'int64'},optional, default='None'
-        DType of the output in case this can't be inferred. Defaults to int32 if not defined (dtype=None).
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -7623,7 +6772,7 @@ def random_uniform(low=_Null, high=_Null, shape=_Null, ctx=_Null, dtype=_Null, o
 
 
 
-    Defined in src/operator/random/sample_op.cc:L96
+    Defined in src/operator/random/sample_op.cc:L66
 
     Parameters
     ----------
@@ -7648,35 +6797,6 @@ def random_uniform(low=_Null, high=_Null, shape=_Null, ctx=_Null, dtype=_Null, o
     """
     return (0,)
 
-def ravel_multi_index(data=None, shape=_Null, out=None, name=None, **kwargs):
-    r"""Converts a batch of index arrays into an array of flat indices. The operator follows numpy conventions so a single multi index is given by a column of the input matrix. 
-
-    Examples::
-   
-       A = [[3,6,6],[4,5,1]]
-       ravel(A, shape=(7,6)) = [22,41,37]
-
-
-
-    Defined in src/operator/tensor/ravel.cc:L41
-
-    Parameters
-    ----------
-    data : NDArray
-        Batch of multi-indices
-    shape : Shape(tuple), optional, default=[]
-        Shape of the array into which the multi-indices apply.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def rcbrt(data=None, out=None, name=None, **kwargs):
     r"""Returns element-wise inverse cube-root value of the input.
 
@@ -7689,7 +6809,7 @@ def rcbrt(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L916
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L693
 
     Parameters
     ----------
@@ -7717,7 +6837,7 @@ def reciprocal(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L640
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L438
 
     Parameters
     ----------
@@ -7744,11 +6864,10 @@ def relu(data=None, out=None, name=None, **kwargs):
 
        - relu(default) = default
        - relu(row_sparse) = row_sparse
-       - relu(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L85
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L84
 
     Parameters
     ----------
@@ -7791,7 +6910,7 @@ def repeat(data=None, repeats=_Null, axis=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L692
+    Defined in src/operator/tensor/matrix_op.cc:L690
 
     Parameters
     ----------
@@ -7876,7 +6995,7 @@ def reshape(data=None, shape=_Null, reverse=_Null, target_shape=_Null, keep_high
 
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L169
+    Defined in src/operator/tensor/matrix_op.cc:L168
 
     Parameters
     ----------
@@ -7902,34 +7021,7 @@ def reshape(data=None, shape=_Null, reverse=_Null, target_shape=_Null, keep_high
     return (0,)
 
 def reshape_like(lhs=None, rhs=None, out=None, name=None, **kwargs):
-    r"""Reshape some or all dimensions of `lhs` to have the same shape as some or all dimensions of `rhs`.
-
-    Returns a **view** of the `lhs` array with a new shape without altering any data.
-
-    Example::
-
-      x = [1, 2, 3, 4, 5, 6]
-      y = [[0, -4], [3, 2], [2, 2]]
-      reshape_like(x, y) = [[1, 2], [3, 4], [5, 6]]
-
-    More precise control over how dimensions are inherited is achieved by specifying \
-    slices over the `lhs` and `rhs` array dimensions. Only the sliced `lhs` dimensions \
-    are reshaped to the `rhs` sliced dimensions, with the non-sliced `lhs` dimensions staying the same.
-
-      Examples::
-
-      - lhs shape = (30,7), rhs shape = (15,2,4), lhs_begin=0, lhs_end=1, rhs_begin=0, rhs_end=2, output shape = (15,2,7)
-      - lhs shape = (3, 5), rhs shape = (1,15,4), lhs_begin=0, lhs_end=2, rhs_begin=1, rhs_end=2, output shape = (15)
-
-    Negative indices are supported, and `None` can be used for either `lhs_end` or `rhs_end` to indicate the end of the range.
-
-      Example::
-
-      - lhs shape = (30, 12), rhs shape = (4, 2, 2, 3), lhs_begin=-1, lhs_end=None, rhs_begin=1, rhs_end=None, output shape = (30, 2, 2, 3)
-
-
-
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L455
+    r"""Reshape lhs to have the same shape as rhs.
 
     Parameters
     ----------
@@ -7965,7 +7057,7 @@ def reverse(data=None, axis=_Null, out=None, name=None, **kwargs):
                             [ 9.,  8.,  7.,  6.,  5.]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L794
+    Defined in src/operator/tensor/matrix_op.cc:L792
 
     Parameters
     ----------
@@ -7999,11 +7091,10 @@ def rint(data=None, out=None, name=None, **kwargs):
 
        - rint(default) = default
        - rint(row_sparse) = row_sparse
-       - rint(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L721
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L519
 
     Parameters
     ----------
@@ -8056,7 +7147,7 @@ def rmsprop_update(weight=None, grad=None, n=None, lr=_Null, gamma1=_Null, epsil
 
 
 
-    Defined in src/operator/optimizer_op.cc:L553
+    Defined in src/operator/optimizer_op.cc:L512
 
     Parameters
     ----------
@@ -8116,7 +7207,7 @@ def rmspropalex_update(weight=None, grad=None, n=None, g=None, delta=None, lr=_N
     to be 0.9 and the learning rate :math:`\eta` to be 0.0001.
 
 
-    Defined in src/operator/optimizer_op.cc:L592
+    Defined in src/operator/optimizer_op.cc:L551
 
     Parameters
     ----------
@@ -8168,11 +7259,10 @@ def round(data=None, out=None, name=None, **kwargs):
 
       - round(default) = default
       - round(row_sparse) = row_sparse
-      - round(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L700
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L498
 
     Parameters
     ----------
@@ -8203,7 +7293,7 @@ def rsqrt(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L860
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L659
 
     Parameters
     ----------
@@ -8411,8 +7501,8 @@ def sample_multinomial(data=None, shape=_Null, get_prob=_Null, dtype=_Null, out=
         Shape to be sampled from each random distribution.
     get_prob : boolean, optional, default=0
         Whether to also return the log probability of sampled result. This is usually used for differentiating through stochastic variables, e.g. in reinforcement learning.
-    dtype : {'float16', 'float32', 'float64', 'int32', 'uint8'},optional, default='int32'
-        DType of the output in case this can't be inferred.
+    dtype : {'int32'},optional, default='int32'
+        DType of the output in case this can't be inferred. Only support int32 for now.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -8658,21 +7748,6 @@ def scatter_nd(data=None, indices=None, shape=_Null, out=None, name=None, **kwar
       shape = (2, 2)
       scatter_nd(data, indices, shape) = [[0, 0], [2, 3]]
 
-      data = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
-      indices = [[0, 1], [1, 1]]
-      shape = (2, 2, 2, 2)
-      scatter_nd(data, indices, shape) = [[[[0, 0],
-                                            [0, 0]],
-
-                                           [[1, 2],
-                                            [3, 4]]],
-
-                                          [[[0, 0],
-                                            [0, 0]],
-
-                                           [[5, 6],
-                                            [7, 8]]]]
-
 
 
     Parameters
@@ -8694,8 +7769,8 @@ def scatter_nd(data=None, indices=None, shape=_Null, out=None, name=None, **kwar
     """
     return (0,)
 
-def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
-    r"""Momentum update function for Stochastic Gradient Descent (SGD) optimizer.
+def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
+    r"""Momentum update function for Stochastic Gradient Descent (SDG) optimizer.
 
     Momentum update has better convergence rates on neural networks. Mathematically it looks
     like below:
@@ -8713,8 +7788,10 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
 
     Where the parameter ``momentum`` is the decay rate of momentum estimates at each epoch.
 
-    However, if grad's storage type is ``row_sparse``, ``lazy_update`` is True and weight's storage
-    type is the same as momentum's storage type,
+    If weight and grad are both of ``row_sparse`` storage type and momentum is of ``default`` storage type,
+    standard update is applied.
+
+    If weight, grad and momentum are all of ``row_sparse`` storage type,
     only the row slices whose indices appear in grad.indices are updated (for both weight and momentum)::
 
       for row in gradient.indices:
@@ -8723,7 +7800,7 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
 
 
 
-    Defined in src/operator/optimizer_op.cc:L372
+    Defined in src/operator/optimizer_op.cc:L336
 
     Parameters
     ----------
@@ -8743,8 +7820,6 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse and both weight and momentum have the same stype
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -8756,22 +7831,22 @@ def sgd_mom_update(weight=None, grad=None, mom=None, lr=_Null, momentum=_Null, w
     """
     return (0,)
 
-def sgd_update(weight=None, grad=None, lr=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, lazy_update=_Null, out=None, name=None, **kwargs):
+def sgd_update(weight=None, grad=None, lr=_Null, wd=_Null, rescale_grad=_Null, clip_gradient=_Null, out=None, name=None, **kwargs):
     r"""Update function for Stochastic Gradient Descent (SDG) optimizer.
 
     It updates the weights using::
 
-     weight = weight - learning_rate * (gradient + wd * weight)
+     weight = weight - learning_rate * gradient
 
-    However, if gradient is of ``row_sparse`` storage type and ``lazy_update`` is True,
+    If weight is of ``row_sparse`` storage type,
     only the row slices whose indices appear in grad.indices are updated::
 
      for row in gradient.indices:
-         weight[row] = weight[row] - learning_rate * (gradient[row] + wd * weight[row])
+         weight[row] = weight[row] - learning_rate * gradient[row]
 
 
 
-    Defined in src/operator/optimizer_op.cc:L331
+    Defined in src/operator/optimizer_op.cc:L293
 
     Parameters
     ----------
@@ -8787,42 +7862,6 @@ def sgd_update(weight=None, grad=None, lr=_Null, wd=_Null, rescale_grad=_Null, c
         Rescale gradient to grad = rescale_grad*grad.
     clip_gradient : float, optional, default=-1
         Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
-    lazy_update : boolean, optional, default=1
-        If true, lazy updates are applied if gradient's stype is row_sparse.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def shape_array(data=None, lhs_begin=_Null, lhs_end=_Null, rhs_begin=_Null, rhs_end=_Null, out=None, name=None, **kwargs):
-    r"""Returns a 1D int64 array containing the shape of data.
-
-    Example::
-
-      shape_array([[1,2,3,4], [5,6,7,8]]) = [2,4]
-
-
-
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L506
-
-    Parameters
-    ----------
-    data : NDArray
-        Input Array.
-    lhs_begin : int or None, optional, default='None'
-        Defaults to 0. The beginning index along which the lhs dimensions are to be reshaped. Supports negative indices.
-    lhs_end : int or None, optional, default='None'
-        Defaults to None. The ending index along which the lhs dimensions are to be used for reshaping. Supports negative indices.
-    rhs_begin : int or None, optional, default='None'
-        Defaults to 0. The beginning index along which the rhs dimensions are to be used for reshaping. Supports negative indices.
-    rhs_end : int or None, optional, default='None'
-        Defaults to None. The ending index along which the rhs dimensions are to be used for reshaping. Supports negative indices.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -8868,7 +7907,7 @@ def sigmoid(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L101
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L103
 
     Parameters
     ----------
@@ -8896,11 +7935,10 @@ def sign(data=None, out=None, name=None, **kwargs):
 
        - sign(default) = default
        - sign(row_sparse) = row_sparse
-       - sign(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L681
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L479
 
     Parameters
     ----------
@@ -9024,7 +8062,6 @@ def sin(data=None, out=None, name=None, **kwargs):
 
        - sin(default) = default
        - sin(row_sparse) = row_sparse
-       - sin(csr) = csr
 
 
 
@@ -9055,7 +8092,6 @@ def sinh(data=None, out=None, name=None, **kwargs):
 
        - sinh(default) = default
        - sinh(row_sparse) = row_sparse
-       - sinh(csr) = csr
 
 
 
@@ -9065,32 +8101,6 @@ def sinh(data=None, out=None, name=None, **kwargs):
     ----------
     data : NDArray
         The input array.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def size_array(data=None, out=None, name=None, **kwargs):
-    r"""Returns a 1D int64 array containing the size of data.
-
-    Example::
-
-      size_array([[1,2,3,4], [5,6,7,8]]) = [8]
-
-
-
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L558
-
-    Parameters
-    ----------
-    data : NDArray
-        Input Array.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -9132,9 +8142,9 @@ def slice(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **
     - otherwise, ``slice`` generates output with default storage
 
     .. note:: When input data storage type is csr, it only supports
-       step=(), or step=(None,), or step=(1,) to generate a csr output.
-       For other step parameter values, it falls back to slicing
-       a dense tensor.
+    step=(), or step=(None,), or step=(1,) to generate a csr output.
+    For other step parameter values, it falls back to slicing
+    a dense tensor.
 
     Example::
 
@@ -9149,7 +8159,7 @@ def slice(data=None, begin=_Null, end=_Null, step=_Null, out=None, name=None, **
                                                                 [1.,  3.]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L414
+    Defined in src/operator/tensor/matrix_op.cc:L412
 
     Parameters
     ----------
@@ -9196,7 +8206,7 @@ def slice_axis(data=None, axis=_Null, begin=_Null, end=_Null, out=None, name=Non
                                                  [ 10.,  11.]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L501
+    Defined in src/operator/tensor/matrix_op.cc:L499
 
     Parameters
     ----------
@@ -9272,7 +8282,7 @@ def slice_like(data=None, shape_like=None, axes=_Null, out=None, name=None, **kw
                                      [  9.,  10.,  11.]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L570
+    Defined in src/operator/tensor/matrix_op.cc:L568
 
     Parameters
     ----------
@@ -9308,12 +8318,11 @@ def smooth_l1(data=None, scalar=_Null, out=None, name=None, **kwargs):
 
     Example::
 
-      smooth_l1([1, 2, 3, 4]) = [0.5, 1.5, 2.5, 3.5]
-      smooth_l1([1, 2, 3, 4], scalar=1) = [0.5, 1.5, 2.5, 3.5]
+      smooth_l1([1, 2, 3, 4], sigma=1) = [0.5, 1.5, 2.5, 3.5]
 
 
 
-    Defined in src/operator/tensor/elemwise_binary_scalar_op_extended.cc:L104
+    Defined in src/operator/tensor/elemwise_binary_scalar_op_extended.cc:L103
 
     Parameters
     ----------
@@ -9332,17 +8341,15 @@ def smooth_l1(data=None, scalar=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def softmax(data=None, axis=_Null, temperature=_Null, out=None, name=None, **kwargs):
+def softmax(data=None, axis=_Null, out=None, name=None, **kwargs):
     r"""Applies the softmax function.
 
     The resulting array contains elements in the range (0,1) and the elements along the given axis sum up to 1.
 
     .. math::
-       softmax(\mathbf{z/t})_j = \frac{e^{z_j/t}}{\sum_{k=1}^K e^{z_k/t}}
+       softmax(\mathbf{z})_j = \frac{e^{z_j}}{\sum_{k=1}^K e^{z_k}}
 
     for :math:`j = 1, ..., K`
-
-    t is the temperature parameter in softmax function. By default, t equals 1.0
 
     Example::
 
@@ -9357,7 +8364,7 @@ def softmax(data=None, axis=_Null, temperature=_Null, out=None, name=None, **kwa
 
 
 
-    Defined in src/operator/nn/softmax.cc:L93
+    Defined in src/operator/nn/softmax.cc:L97
 
     Parameters
     ----------
@@ -9365,8 +8372,6 @@ def softmax(data=None, axis=_Null, temperature=_Null, out=None, name=None, **kwa
         The input array.
     axis : int, optional, default='-1'
         The axis along which to compute softmax.
-    temperature : double or None, optional, default=None
-        Temperature parameter in softmax
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -9428,53 +8433,6 @@ def softmax_cross_entropy(data=None, label=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def softmin(data=None, axis=_Null, temperature=_Null, out=None, name=None, **kwargs):
-    r"""Applies the softmin function.
-
-    The resulting array contains elements in the range (0,1) and the elements along the given axis sum
-    up to 1.
-
-    .. math::
-       softmin(\mathbf{z/t})_j = \frac{e^{-z_j/t}}{\sum_{k=1}^K e^{-z_k/t}}
-
-    for :math:`j = 1, ..., K`
-
-    t is the temperature parameter in softmax function. By default, t equals 1.0
-
-    Example::
-
-      x = [[ 1.  2.  3.]
-           [ 3.  2.  1.]]
-
-      softmin(x,axis=0) = [[ 0.88079703,  0.5,  0.11920292],
-                           [ 0.11920292,  0.5,  0.88079703]]
-
-      softmin(x,axis=1) = [[ 0.66524094,  0.24472848,  0.09003057],
-                           [ 0.09003057,  0.24472848,  0.66524094]]
-
-
-
-    Defined in src/operator/nn/softmax.cc:L137
-
-    Parameters
-    ----------
-    data : NDArray
-        The input array.
-    axis : int, optional, default='-1'
-        The axis along which to compute softmax.
-    temperature : double or None, optional, default=None
-        Temperature parameter in softmax
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
 def softsign(data=None, out=None, name=None, **kwargs):
     r"""Computes softsign of x element-wise.
 
@@ -9485,7 +8443,7 @@ def softsign(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L145
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L119
 
     Parameters
     ----------
@@ -9527,7 +8485,7 @@ def sort(data=None, axis=_Null, is_ascend=_Null, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/ordering_op.cc:L127
+    Defined in src/operator/tensor/ordering_op.cc:L126
 
     Parameters
     ----------
@@ -9537,62 +8495,6 @@ def sort(data=None, axis=_Null, is_ascend=_Null, out=None, name=None, **kwargs):
         Axis along which to choose sort the input tensor. If not given, the flattened array is used. Default is -1.
     is_ascend : boolean, optional, default=1
         Whether to sort in ascending or descending order.
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def space_to_depth(data=None, block_size=_Null, out=None, name=None, **kwargs):
-    r"""Rearranges(permutes) blocks of spatial data into depth.
-    Similar to ONNX SpaceToDepth operator:
-    https://github.com/onnx/onnx/blob/master/docs/Operators.md#SpaceToDepth 
-
-    The output is a new tensor where the values from height and width dimension are 
-    moved to the depth dimension. The reverse of this operation is ``depth_to_space``.
-
-    .. math::
-
-        \begin{gather*}
-        x \prime = reshape(x, [N, C, H / block\_size, block\_size, W / block\_size, block\_size]) \\
-        x \prime \prime = transpose(x \prime, [0, 3, 5, 1, 2, 4]) \\
-        y = reshape(x \prime \prime, [N, C * (block\_size ^ 2), H / block\_size, W / block\_size])
-        \end{gather*}
-
-    where :math:`x` is an input tensor with default layout as :math:`[N, C, H, W]`: [batch, channels, height, width] 
-    and :math:`y` is the output tensor of layout :math:`[N, C * (block\_size ^ 2), H / block\_size, W / block\_size]`
-
-    Example::
-
-      x = [[[[0, 6, 1, 7, 2, 8],
-             [12, 18, 13, 19, 14, 20],
-             [3, 9, 4, 10, 5, 11],
-             [15, 21, 16, 22, 17, 23]]]]
-  
-  
-      space_to_depth(x, 2) = [[[[0, 1, 2],
-                                [3, 4, 5]],
-                               [[6, 7, 8],
-                                [9, 10, 11]],
-                               [[12, 13, 14],
-                                [15, 16, 17]],
-                               [[18, 19, 20],
-                                [21, 22, 23]]]]
-
-
-    Defined in src/operator/tensor/matrix_op.cc:L1000
-
-    Parameters
-    ----------
-    data : NDArray
-        Input ndarray
-    block_size : int, required
-        Blocks of [block_size. block_size] are moved
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -9702,11 +8604,10 @@ def sqrt(data=None, out=None, name=None, **kwargs):
 
        - sqrt(default) = default
        - sqrt(row_sparse) = row_sparse
-       - sqrt(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L840
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L639
 
     Parameters
     ----------
@@ -9741,7 +8642,7 @@ def square(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L817
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L616
 
     Parameters
     ----------
@@ -9856,7 +8757,7 @@ def stop_gradient(data=None, out=None, name=None, **kwargs):
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L267
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L241
 
     Parameters
     ----------
@@ -9884,9 +8785,9 @@ def sum(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
 
     Example::
 
-      data = [[[1, 2], [2, 3], [1, 3]],
-              [[1, 4], [4, 3], [5, 2]],
-              [[7, 1], [7, 2], [7, 3]]]
+      data = [[[1,2],[2,3],[1,3]],
+              [[1,4],[4,3],[5,2]],
+              [[7,1],[7,2],[7,3]]]
 
       sum(data, axis=1)
       [[  4.   8.]
@@ -9896,9 +8797,9 @@ def sum(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
       sum(data, axis=[1,2])
       [ 12.  19.  27.]
 
-      data = [[1, 2, 0],
-              [3, 0, 1],
-              [4, 1, 0]]
+      data = [[1,2,0],
+              [3,0,1],
+              [4,1,0]]
 
       csr = cast_storage(data, 'csr')
 
@@ -9910,7 +8811,7 @@ def sum(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, name=Non
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L116
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L86
 
     Parameters
     ----------
@@ -9957,9 +8858,9 @@ def sum_axis(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, nam
 
     Example::
 
-      data = [[[1, 2], [2, 3], [1, 3]],
-              [[1, 4], [4, 3], [5, 2]],
-              [[7, 1], [7, 2], [7, 3]]]
+      data = [[[1,2],[2,3],[1,3]],
+              [[1,4],[4,3],[5,2]],
+              [[7,1],[7,2],[7,3]]]
 
       sum(data, axis=1)
       [[  4.   8.]
@@ -9969,9 +8870,9 @@ def sum_axis(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, nam
       sum(data, axis=[1,2])
       [ 12.  19.  27.]
 
-      data = [[1, 2, 0],
-              [3, 0, 1],
-              [4, 1, 0]]
+      data = [[1,2,0],
+              [3,0,1],
+              [4,1,0]]
 
       csr = cast_storage(data, 'csr')
 
@@ -9983,7 +8884,7 @@ def sum_axis(data=None, axis=_Null, keepdims=_Null, exclude=_Null, out=None, nam
 
 
 
-    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L116
+    Defined in src/operator/tensor/broadcast_reduce_op_value.cc:L86
 
     Parameters
     ----------
@@ -10066,51 +8967,35 @@ def take(a=None, indices=None, axis=_Null, mode=_Null, out=None, name=None, **kw
 
     This function slices the input array along a particular axis with the provided indices.
 
-    Given data tensor of rank r >= 1, and indices tensor of rank q, gather entries of the axis
-    dimension of data (by default outer-most one as axis=0) indexed by indices, and concatenates them
-    in an output tensor of rank q + (r - 1).
+    Given an input array with shape ``(d0, d1, d2)`` and indices with shape ``(i0, i1)``, the output
+    will have shape ``(i0, i1, d1, d2)``, computed by::
+
+      output[i,j,:,:] = input[indices[i,j],:,:]
+
+    .. note::
+       - `axis`- Only slicing along axis 0 is supported for now.
+       - `mode`- Only `clip` mode is supported for now.
 
     Examples::
-
       x = [4.  5.  6.]
 
       // Trivial case, take the second element along the first axis.
-
       take(x, [1]) = [ 5. ]
-
-      // The other trivial case, axis=-1, take the third element along the first axis
-
-      take(x, [3], axis=-1, mode='clip') = [ 6. ]
 
       x = [[ 1.,  2.],
            [ 3.,  4.],
            [ 5.,  6.]]
 
       // In this case we will get rows 0 and 1, then 1 and 2. Along axis 0
-
       take(x, [[0,1],[1,2]]) = [[[ 1.,  2.],
                                  [ 3.,  4.]],
 
                                 [[ 3.,  4.],
                                  [ 5.,  6.]]]
 
-      // In this case we will get rows 0 and 1, then 1 and 2 (calculated by wrapping around).
-      // Along axis 1
-
-      take(x, [[0, 3], [-1, -2]], axis=1, mode='wrap') = [[[ 1.,  2.],
-                                                           [ 3.,  4.]],
-
-                                                          [[ 3.,  4.],
-                                                           [ 5.,  6.]]]
-
-    The storage type of ``take`` output depends upon the input storage type:
-
-       - take(default, default) = default
-       - take(csr, default, axis=0) = csr
 
 
-
-    Defined in src/operator/tensor/indexing_op.cc:L692
+    Defined in src/operator/tensor/indexing_op.cc:L379
 
     Parameters
     ----------
@@ -10119,9 +9004,9 @@ def take(a=None, indices=None, axis=_Null, mode=_Null, out=None, name=None, **kw
     indices : NDArray
         The indices of the values to be extracted.
     axis : int, optional, default='0'
-        The axis of input array to be taken.For input tensor of rank r, it could be in the range of [-r, r-1]
+        The axis of input array to be taken.
     mode : {'clip', 'raise', 'wrap'},optional, default='clip'
-        Specify how out-of-bound indices bahave. Default is "clip". "clip" means clip to the range. So, if all indices mentioned are too large, they are replaced by the index that addresses the last element along an axis.  "wrap" means to wrap around.  "raise" means to raise an error, not supported yet.
+        Specify how out-of-bound indices bahave. "clip" means clip to the range. So, if all indices mentioned are too large, they are replaced by the index that addresses the last element along an axis.  "wrap" means to wrap around.  "raise" means to raise an error. 
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -10145,7 +9030,6 @@ def tan(data=None, out=None, name=None, **kwargs):
 
        - tan(default) = default
        - tan(row_sparse) = row_sparse
-       - tan(csr) = csr
 
 
 
@@ -10176,7 +9060,6 @@ def tanh(data=None, out=None, name=None, **kwargs):
 
        - tanh(default) = default
        - tanh(row_sparse) = row_sparse
-       - tanh(csr) = csr
 
 
 
@@ -10234,7 +9117,7 @@ def tile(data=None, reps=_Null, out=None, name=None, **kwargs):
                                   [ 3.,  4.,  3.,  4.,  3.,  4.]]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L753
+    Defined in src/operator/tensor/matrix_op.cc:L751
 
     Parameters
     ----------
@@ -10253,9 +9136,8 @@ def tile(data=None, reps=_Null, out=None, name=None, **kwargs):
     """
     return (0,)
 
-def topk(data=None, axis=_Null, k=_Null, ret_typ=_Null, is_ascend=_Null, dtype=_Null, out=None, name=None, **kwargs):
+def topk(data=None, axis=_Null, k=_Null, ret_typ=_Null, is_ascend=_Null, out=None, name=None, **kwargs):
     r"""Returns the top *k* elements in an input array along the given axis.
-     The returned elements will be sorted.
 
     Examples::
 
@@ -10283,7 +9165,7 @@ def topk(data=None, axis=_Null, k=_Null, ret_typ=_Null, is_ascend=_Null, dtype=_
 
 
 
-    Defined in src/operator/tensor/ordering_op.cc:L64
+    Defined in src/operator/tensor/ordering_op.cc:L63
 
     Parameters
     ----------
@@ -10298,8 +9180,6 @@ def topk(data=None, axis=_Null, k=_Null, ret_typ=_Null, is_ascend=_Null, dtype=_
      "value" means to return the top k values, "indices" means to return the indices of the top k values, "mask" means to return a mask array containing 0 and 1. 1 means the top k values. "both" means to return a list of both values and indices of top k elements.
     is_ascend : boolean, optional, default=0
         Whether to choose k largest or k smallest elements. Top K largest elements will be chosen if set to false.
-    dtype : {'float16', 'float32', 'float64', 'int32', 'uint8'},optional, default='float32'
-        DType of the output indices when ret_typ is "indices" or "both". An error will be raised if the selected data type cannot precisely represent the indices.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -10341,7 +9221,7 @@ def transpose(data=None, axes=_Null, out=None, name=None, **kwargs):
                                      [ 7.,  8.]]]
 
 
-    Defined in src/operator/tensor/matrix_op.cc:L312
+    Defined in src/operator/tensor/matrix_op.cc:L310
 
     Parameters
     ----------
@@ -10374,11 +9254,10 @@ def trunc(data=None, out=None, name=None, **kwargs):
 
        - trunc(default) = default
        - trunc(row_sparse) = row_sparse
-       - trunc(csr) = csr
 
 
 
-    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L779
+    Defined in src/operator/tensor/elemwise_unary_op_basic.cc:L577
 
     Parameters
     ----------
@@ -10410,7 +9289,7 @@ def uniform(low=_Null, high=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None
 
 
 
-    Defined in src/operator/random/sample_op.cc:L96
+    Defined in src/operator/random/sample_op.cc:L66
 
     Parameters
     ----------
@@ -10424,35 +9303,6 @@ def uniform(low=_Null, high=_Null, shape=_Null, ctx=_Null, dtype=_Null, out=None
         Context of output, in format [cpu|gpu|cpu_pinned](n). Only used for imperative calls.
     dtype : {'None', 'float16', 'float32', 'float64'},optional, default='None'
         DType of the output in case this can't be inferred. Defaults to float32 if not defined (dtype=None).
-
-    out : NDArray, optional
-        The output NDArray to hold the result.
-
-    Returns
-    -------
-    out : NDArray or list of NDArrays
-        The output of this function.
-    """
-    return (0,)
-
-def unravel_index(data=None, shape=_Null, out=None, name=None, **kwargs):
-    r"""Converts an array of flat indices into a batch of index arrays. The operator follows numpy conventions so a single multi index is given by a column of the output matrix.
-
-    Examples::
-
-       A = [22,41,37]
-       unravel(A, shape=(7,6)) = [[3,6,6],[4,5,1]]
-
-
-
-    Defined in src/operator/tensor/ravel.cc:L65
-
-    Parameters
-    ----------
-    data : NDArray
-        Array of flat indices
-    shape : Shape(tuple), optional, default=[]
-        Shape of the array into which the multi-indices apply.
 
     out : NDArray, optional
         The output NDArray to hold the result.
@@ -10512,7 +9362,7 @@ def where(condition=None, x=None, y=None, out=None, name=None, **kwargs):
     return (0,)
 
 def zeros_like(data=None, out=None, name=None, **kwargs):
-    r"""Return an array of zeros with the same shape, type and storage type
+    r"""Return an array of zeros with the same shape and type
     as the input array.
 
     The storage type of ``zeros_like`` output depends on the storage type of the input
@@ -10546,4 +9396,4 @@ def zeros_like(data=None, out=None, name=None, **kwargs):
     """
     return (0,)
 
-__all__ = ['Activation', 'BatchNorm', 'BatchNorm_v1', 'BilinearSampler', 'BlockGrad', 'CTCLoss', 'Cast', 'Concat', 'Convolution', 'Convolution_v1', 'Correlation', 'Crop', 'Custom', 'Deconvolution', 'Dropout', 'ElementWiseSum', 'Embedding', 'Flatten', 'FullyConnected', 'GridGenerator', 'IdentityAttachKLSparseReg', 'InstanceNorm', 'L2Normalization', 'LRN', 'LayerNorm', 'LeakyReLU', 'LinearRegressionOutput', 'LogisticRegressionOutput', 'MAERegressionOutput', 'MakeLoss', 'Pad', 'Pooling', 'Pooling_v1', 'RNN', 'ROIPooling', 'Reshape', 'SVMOutput', 'SequenceLast', 'SequenceMask', 'SequenceReverse', 'SliceChannel', 'Softmax', 'SoftmaxActivation', 'SoftmaxOutput', 'SpatialTransformer', 'SwapAxis', 'UpSampling', 'abs', 'adam_update', 'add_n', 'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctanh', 'argmax', 'argmax_channel', 'argmin', 'argsort', 'batch_dot', 'batch_take', 'broadcast_add', 'broadcast_axes', 'broadcast_axis', 'broadcast_div', 'broadcast_equal', 'broadcast_greater', 'broadcast_greater_equal', 'broadcast_hypot', 'broadcast_lesser', 'broadcast_lesser_equal', 'broadcast_like', 'broadcast_logical_and', 'broadcast_logical_or', 'broadcast_logical_xor', 'broadcast_maximum', 'broadcast_minimum', 'broadcast_minus', 'broadcast_mod', 'broadcast_mul', 'broadcast_not_equal', 'broadcast_plus', 'broadcast_power', 'broadcast_sub', 'broadcast_to', 'cast', 'cast_storage', 'cbrt', 'ceil', 'choose_element_0index', 'clip', 'concat', 'cos', 'cosh', 'crop', 'ctc_loss', 'degrees', 'depth_to_space', 'diag', 'dot', 'elemwise_add', 'elemwise_div', 'elemwise_mul', 'elemwise_sub', 'erf', 'exp', 'expand_dims', 'expm1', 'fill_element_0index', 'fix', 'flatten', 'flip', 'floor', 'ftml_update', 'ftrl_update', 'gamma', 'gammaln', 'gather_nd', 'hard_sigmoid', 'identity', 'khatri_rao', 'linalg_gelqf', 'linalg_gemm', 'linalg_gemm2', 'linalg_potrf', 'linalg_potri', 'linalg_sumlogdiag', 'linalg_syrk', 'linalg_trmm', 'linalg_trsm', 'log', 'log10', 'log1p', 'log2', 'log_softmax', 'logical_not', 'make_loss', 'max', 'max_axis', 'mean', 'min', 'min_axis', 'mp_sgd_mom_update', 'mp_sgd_update', 'nanprod', 'nansum', 'negative', 'norm', 'normal', 'one_hot', 'ones_like', 'pad', 'pick', 'prod', 'radians', 'random_exponential', 'random_gamma', 'random_generalized_negative_binomial', 'random_negative_binomial', 'random_normal', 'random_poisson', 'random_randint', 'random_uniform', 'ravel_multi_index', 'rcbrt', 'reciprocal', 'relu', 'repeat', 'reshape', 'reshape_like', 'reverse', 'rint', 'rmsprop_update', 'rmspropalex_update', 'round', 'rsqrt', 'sample_exponential', 'sample_gamma', 'sample_generalized_negative_binomial', 'sample_multinomial', 'sample_negative_binomial', 'sample_normal', 'sample_poisson', 'sample_uniform', 'scatter_nd', 'sgd_mom_update', 'sgd_update', 'shape_array', 'shuffle', 'sigmoid', 'sign', 'signsgd_update', 'signum_update', 'sin', 'sinh', 'size_array', 'slice', 'slice_axis', 'slice_like', 'smooth_l1', 'softmax', 'softmax_cross_entropy', 'softmin', 'softsign', 'sort', 'space_to_depth', 'split', 'sqrt', 'square', 'squeeze', 'stack', 'stop_gradient', 'sum', 'sum_axis', 'swapaxes', 'take', 'tan', 'tanh', 'tile', 'topk', 'transpose', 'trunc', 'uniform', 'unravel_index', 'where', 'zeros_like']
+__all__ = ['Activation', 'BatchNorm', 'BatchNorm_v1', 'BilinearSampler', 'BlockGrad', 'Cast', 'Concat', 'Convolution', 'Convolution_v1', 'Correlation', 'Crop', 'Custom', 'Deconvolution', 'Dropout', 'ElementWiseSum', 'Embedding', 'Flatten', 'FullyConnected', 'GridGenerator', 'IdentityAttachKLSparseReg', 'InstanceNorm', 'L2Normalization', 'LRN', 'LayerNorm', 'LeakyReLU', 'LinearRegressionOutput', 'LogisticRegressionOutput', 'MAERegressionOutput', 'MakeLoss', 'Pad', 'Pooling', 'Pooling_v1', 'RNN', 'ROIPooling', 'Reshape', 'SVMOutput', 'SequenceLast', 'SequenceMask', 'SequenceReverse', 'SliceChannel', 'Softmax', 'SoftmaxActivation', 'SoftmaxOutput', 'SpatialTransformer', 'SwapAxis', 'UpSampling', 'abs', 'adam_update', 'add_n', 'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctanh', 'argmax', 'argmax_channel', 'argmin', 'argsort', 'batch_dot', 'batch_take', 'broadcast_add', 'broadcast_axes', 'broadcast_axis', 'broadcast_div', 'broadcast_equal', 'broadcast_greater', 'broadcast_greater_equal', 'broadcast_hypot', 'broadcast_lesser', 'broadcast_lesser_equal', 'broadcast_maximum', 'broadcast_minimum', 'broadcast_minus', 'broadcast_mod', 'broadcast_mul', 'broadcast_not_equal', 'broadcast_plus', 'broadcast_power', 'broadcast_sub', 'broadcast_to', 'cast', 'cast_storage', 'cbrt', 'ceil', 'choose_element_0index', 'clip', 'concat', 'cos', 'cosh', 'crop', 'degrees', 'dot', 'elemwise_add', 'elemwise_div', 'elemwise_mul', 'elemwise_sub', 'exp', 'expand_dims', 'expm1', 'fill_element_0index', 'fix', 'flatten', 'flip', 'floor', 'ftml_update', 'ftrl_update', 'gamma', 'gammaln', 'gather_nd', 'identity', 'khatri_rao', 'linalg_gelqf', 'linalg_gemm', 'linalg_gemm2', 'linalg_potrf', 'linalg_potri', 'linalg_sumlogdiag', 'linalg_syrk', 'linalg_trmm', 'linalg_trsm', 'log', 'log10', 'log1p', 'log2', 'log_softmax', 'make_loss', 'max', 'max_axis', 'mean', 'min', 'min_axis', 'mp_sgd_mom_update', 'mp_sgd_update', 'nanprod', 'nansum', 'negative', 'norm', 'normal', 'one_hot', 'ones_like', 'pad', 'pick', 'prod', 'radians', 'random_exponential', 'random_gamma', 'random_generalized_negative_binomial', 'random_negative_binomial', 'random_normal', 'random_poisson', 'random_uniform', 'rcbrt', 'reciprocal', 'relu', 'repeat', 'reshape', 'reshape_like', 'reverse', 'rint', 'rmsprop_update', 'rmspropalex_update', 'round', 'rsqrt', 'sample_exponential', 'sample_gamma', 'sample_generalized_negative_binomial', 'sample_multinomial', 'sample_negative_binomial', 'sample_normal', 'sample_poisson', 'sample_uniform', 'scatter_nd', 'sgd_mom_update', 'sgd_update', 'shuffle', 'sigmoid', 'sign', 'signsgd_update', 'signum_update', 'sin', 'sinh', 'slice', 'slice_axis', 'slice_like', 'smooth_l1', 'softmax', 'softmax_cross_entropy', 'softsign', 'sort', 'split', 'sqrt', 'square', 'squeeze', 'stack', 'stop_gradient', 'sum', 'sum_axis', 'swapaxes', 'take', 'tan', 'tanh', 'tile', 'topk', 'transpose', 'trunc', 'uniform', 'where', 'zeros_like']

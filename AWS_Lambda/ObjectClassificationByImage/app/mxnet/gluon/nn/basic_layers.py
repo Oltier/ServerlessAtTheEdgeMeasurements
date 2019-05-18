@@ -62,20 +62,13 @@ class Sequential(Block):
                         modstr=modstr)
 
     def __getitem__(self, key):
-        layers = list(self._children.values())[key]
-        if isinstance(layers, list):
-            net = type(self)(prefix=self._prefix)
-            with net.name_scope():
-                net.add(*layers)
-            return net
-        else:
-            return layers
+        return list(self._children.values())[key]
 
     def __len__(self):
         return len(self._children)
 
     def hybridize(self, active=True, **kwargs):
-        """Activates or deactivates `HybridBlock` s recursively. Has no effect on
+        """Activates or deactivates `HybridBlock`s recursively. Has no effect on
         non-hybrid children.
 
         Parameters
@@ -126,14 +119,7 @@ class HybridSequential(HybridBlock):
                         modstr=modstr)
 
     def __getitem__(self, key):
-        layers = list(self._children.values())[key]
-        if isinstance(layers, list):
-            net = type(self)(prefix=self._prefix)
-            with net.name_scope():
-                net.add(*layers)
-            return net
-        else:
-            return layers
+        return list(self._children.values())[key]
 
     def __len__(self):
         return len(self._children)
@@ -160,9 +146,9 @@ class Dense(HybridBlock):
         Activation function to use. See help on `Activation` layer.
         If you don't specify anything, no activation is applied
         (ie. "linear" activation: `a(x) = x`).
-    use_bias : bool, default True
+    use_bias : bool
         Whether the layer uses a bias vector.
-    flatten: bool, default True
+    flatten: bool
         Whether the input tensor should be flattened.
         If true, all but the first axis of input data are collapsed together.
         If false, all but the last axis of input data are kept the same, and the transformation
@@ -370,11 +356,6 @@ class Embedding(HybridBlock):
     r"""Turns non-negative integers (indexes/tokens) into dense vectors
     of fixed size. eg. [4, 20] -> [[0.25, 0.1], [0.6, -0.2]]
 
-    Note: if `sparse_grad` is set to True, the gradient w.r.t weight will be
-    sparse. Only a subset of optimizers support sparse gradients, including SGD, AdaGrad
-    and Adam. By default lazy updates is turned on, which may perform differently
-    from standard updates. For more details, please check the Optimization API at:
-    https://mxnet.incubator.apache.org/api/python/optimization/optimization.html
 
     Parameters
     ----------
@@ -386,8 +367,7 @@ class Embedding(HybridBlock):
         Data type of output embeddings.
     weight_initializer : Initializer
         Initializer for the `embeddings` matrix.
-    sparse_grad: bool
-        If True, gradient w.r.t. weight will be a 'row_sparse' NDArray.
+
 
     Inputs:
         - **data**: (N-1)-D tensor with shape: `(x1, x2, ..., xN-1)`.
@@ -396,14 +376,13 @@ class Embedding(HybridBlock):
         - **out**: N-D tensor with shape: `(x1, x2, ..., xN-1, output_dim)`.
     """
     def __init__(self, input_dim, output_dim, dtype='float32',
-                 weight_initializer=None, sparse_grad=False, **kwargs):
+                 weight_initializer=None, **kwargs):
         super(Embedding, self).__init__(**kwargs)
-        grad_stype = 'row_sparse' if sparse_grad else 'default'
         self._kwargs = {'input_dim': input_dim, 'output_dim': output_dim,
-                        'dtype': dtype, 'sparse_grad': sparse_grad}
+                        'dtype': dtype}
         self.weight = self.params.get('weight', shape=(input_dim, output_dim),
                                       init=weight_initializer, dtype=dtype,
-                                      allow_deferred_init=True, grad_stype=grad_stype)
+                                      allow_deferred_init=True)
 
     def hybrid_forward(self, F, x, weight):
         return F.Embedding(x, weight, name='fwd', **self._kwargs)
@@ -427,7 +406,7 @@ class Flatten(HybridBlock):
         super(Flatten, self).__init__(**kwargs)
 
     def hybrid_forward(self, F, x):
-        return F.Flatten(x)
+        return x.reshape((0, -1))
 
     def __repr__(self):
         return self.__class__.__name__
@@ -625,7 +604,7 @@ class Lambda(Block):
 
             block = Lambda('tanh')
 
-        2) a function that conforms to ``def function(*args)``. For example::
+        2) a function that conforms to "def function(*args)". For example::
 
             block = Lambda(lambda x: nd.LeakyReLU(x, slope=0.1))
 
@@ -663,21 +642,20 @@ class HybridLambda(HybridBlock):
     ----------
     function : str or function
         Function used in lambda must be one of the following:
-        1) The name of an operator that is available in both symbol and ndarray. For example::
+        1) the name of an operator that is available in both symbol and ndarray. For example::
 
             block = HybridLambda('tanh')
 
-        2) A function that conforms to ``def function(F, data, *args)``. For example::
+        2) a function that conforms to "def function(F, data, *args)". For example::
 
             block = HybridLambda(lambda F, x: F.LeakyReLU(x, slope=0.1))
 
     Inputs:
-        - ** *args **: one or more input data. First argument must be symbol or ndarray. Their \
-            shapes depend on the function.
+        - ** *args **: one or more input data. First argument must be symbol or ndarray.
+        Their shapes depend on the function.
 
     Output:
         - ** *outputs **: one or more output data. Their shapes depend on the function.
-
     """
     def __init__(self, function, prefix=None):
         super(HybridLambda, self).__init__(prefix=prefix)

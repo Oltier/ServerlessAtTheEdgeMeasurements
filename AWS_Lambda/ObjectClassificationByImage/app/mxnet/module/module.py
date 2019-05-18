@@ -398,6 +398,7 @@ class Module(BaseModule):
 
         self.for_training = for_training
         self.inputs_need_grad = inputs_need_grad
+        self.binded = True
         self._grad_req = grad_req
 
         if not for_training:
@@ -453,8 +454,6 @@ class Module(BaseModule):
         if shared_module is not None and shared_module.optimizer_initialized:
             self.borrow_optimizer(shared_module)
 
-        self.binded = True
-
     def reshape(self, data_shapes, label_shapes=None):
         """Reshapes the module for new input shapes.
 
@@ -505,14 +504,14 @@ class Module(BaseModule):
             batch_size *= kvstore.num_workers
         rescale_grad = 1.0/batch_size
 
-        idx2name = {}
-        if update_on_kvstore:
-            idx2name.update(enumerate(self._exec_group.param_names))
-        else:
-            for k in range(len(self._context)):
-                idx2name.update({i*len(self._context)+k: n
-                                 for i, n in enumerate(self._exec_group.param_names)})
         if isinstance(optimizer, str):
+            idx2name = {}
+            if update_on_kvstore:
+                idx2name.update(enumerate(self._exec_group.param_names))
+            else:
+                for k in range(len(self._context)):
+                    idx2name.update({i*len(self._context)+k: n
+                                     for i, n in enumerate(self._exec_group.param_names)})
             optimizer_params = dict(optimizer_params)
             if 'rescale_grad' not in optimizer_params:
                 optimizer_params['rescale_grad'] = rescale_grad
@@ -528,8 +527,6 @@ class Module(BaseModule):
                     "is not normalized to 1.0/batch_size/num_workers (%s vs. %s). "%(
                         optimizer.rescale_grad, rescale_grad) +
                     "Is this intended?", stacklevel=2)
-            if not optimizer.idx2name:
-                optimizer.idx2name = idx2name.copy()
 
         self._optimizer = optimizer
         self._kvstore = kvstore
@@ -593,19 +590,7 @@ class Module(BaseModule):
         assert self.binded and self.params_initialized
 
         curr_data_shapes = tuple(i.shape for i in self._data_shapes)
-        if isinstance(data_batch, list):
-            assert data_batch is not None, "Encountered empty data batch"
-            new_data_shapes = []
-            for i in range(len(data_batch[0].data)):
-                shape = data_batch[0].data[i].shape
-                for db in data_batch:
-                    assert shape == db.data[i].shape, \
-                        "All data batches in a list need to have the same shape"
-                new_batch_size = len(data_batch) * shape[0]
-                new_data_shapes.append((new_batch_size,) + shape[1:])
-            new_data_shapes = tuple(new_data_shapes)
-        else:
-            new_data_shapes = tuple(i.shape for i in data_batch.data)
+        new_data_shapes = tuple(i.shape for i in data_batch.data)
 
         if curr_data_shapes != new_data_shapes:
             if hasattr(data_batch, "provide_data") and data_batch.provide_data:
@@ -756,7 +741,7 @@ class Module(BaseModule):
         assert self.binded and self.params_initialized
         self._exec_group.set_states(states, value)
 
-    def update_metric(self, eval_metric, labels, pre_sliced=False):
+    def update_metric(self, eval_metric, labels):
         """Evaluates and accumulates evaluation metric on outputs of the last forward computation.
 
         See Also
@@ -766,13 +751,10 @@ class Module(BaseModule):
         Parameters
         ----------
         eval_metric : EvalMetric
-            Evaluation metric to use.
-        labels : list of NDArray if `pre_sliced` parameter is set to `False`,
-            list of lists of NDArray otherwise. Typically `data_batch.label`.
-        pre_sliced: bool
-            Whether the labels are already sliced per device (default: False).
+        labels : list of NDArray
+            Typically ``data_batch.label``.
         """
-        self._exec_group.update_metric(eval_metric, labels, pre_sliced)
+        self._exec_group.update_metric(eval_metric, labels)
 
     def _sync_params_from_devices(self):
         """Synchronizes parameters from devices to CPU. This function should be called after

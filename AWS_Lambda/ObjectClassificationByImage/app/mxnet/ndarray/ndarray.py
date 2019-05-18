@@ -34,20 +34,19 @@ import operator
 from functools import reduce # pylint: disable=redefined-builtin
 import numpy as np
 from ..base import _LIB, numeric_types, integer_types
-from ..base import c_str, c_array, c_array_buf, c_handle_array, mx_real_t
-from ..base import mx_uint, NDArrayHandle, check_call, DLPackHandle
+from ..base import c_array, c_array_buf, c_handle_array, mx_real_t
+from ..base import mx_uint, NDArrayHandle, check_call
 from ..base import ctypes2buffer
-from ..context import Context, current_context
+from ..context import Context
 from . import _internal
 from . import op
 from ._internal import NDArrayBase
 
 __all__ = ["NDArray", "concatenate", "_DTYPE_NP_TO_MX", "_DTYPE_MX_TO_NP", "_GRAD_REQ_MAP",
            "ones", "add", "arange", "eye", "divide", "equal", "full", "greater", "greater_equal",
-           "imdecode", "lesser", "lesser_equal", "logical_and", "logical_or", "logical_xor",
-           "maximum", "minimum", "moveaxis", "modulo", "multiply", "not_equal", "onehot_encode",
-           "power", "subtract", "true_divide", "waitall", "_new_empty_handle", "histogram",
-           "to_dlpack_for_read", "to_dlpack_for_write", "from_dlpack"]
+           "imdecode", "lesser", "lesser_equal", "maximum", "minimum", "moveaxis", "modulo",
+           "multiply", "not_equal", "onehot_encode", "power", "subtract", "true_divide",
+           "waitall", "_new_empty_handle"]
 
 _STORAGE_TYPE_UNDEFINED = -1
 _STORAGE_TYPE_DEFAULT = 0
@@ -179,6 +178,7 @@ fixed-size items.
     # See C++ side of definition(kTVMNDArrayTypeCode) at include/mxmet/tensor_blob.h
     _tvm_tcode = 19
     # pylint: disable= no-member, undefined-variable
+
     @property
     def _tvm_handle(self):
         return self.handle.value
@@ -399,7 +399,7 @@ fixed-size items.
 
         Parameters
         ----------
-        key : int, mxnet.ndarray.slice, list, np.ndarray, NDArray, or tuple of all previous types
+        key : int, slice, list, np.ndarray, NDArray, or tuple of all previous types
             The indexing key.
         value : scalar or array-like object that can be broadcast to the shape of self[key]
             The value to set.
@@ -467,7 +467,7 @@ fixed-size items.
 
         Parameters
         ----------
-        key : int, mxnet.ndarray.slice, list, np.ndarray, NDArray, or tuple of all previous types
+        key : int, slice, list, np.ndarray, NDArray, or tuple of all previous types
             Indexing key.
 
         Examples
@@ -682,20 +682,17 @@ fixed-size items.
         on the values of slices' steps."""
         shape = self.shape
         if isinstance(key, integer_types):
-            if key < 0:
-                key += shape[0]
-            if key < 0 or key >= shape[0]:
-                if key < 0:
-                    key -= shape[0]
-                raise IndexError('index %d is out of bounds for axis 0 with size %d'
-                                 % (key, shape[0]))
-            key = py_slice(key, key+1)  # key must be >= 0 here
-
-        if isinstance(key, py_slice):
-            assign_to_self = key.step is None or key.step == 1
-            assign_to_self &= key.start is None or key.start == 0
-            assign_to_self &= key.stop is None or key.stop == shape[0]
-            if assign_to_self:  # trivial case, assign value to self
+            sliced_arr = self._at(key)
+            sliced_arr[:] = value
+            return
+        elif isinstance(key, py_slice):
+            if key.step is None or key.step == 1:  # trivial step
+                if key.start is not None or key.stop is not None:
+                    sliced_arr = self._slice(key.start, key.stop)
+                    sliced_arr[:] = value
+                    return
+                # assign value to the whole NDArray
+                # may need to broadcast first
                 if isinstance(value, NDArray):
                     if value.handle is not self.handle:
                         if value.shape != shape:
@@ -712,7 +709,7 @@ fixed-size items.
                     value_nd = self._prepare_value_nd(value, shape)
                     value_nd.copyto(self)
                 return
-            else:  # non-trivial case, use _slice_assign or _slice_assign_scalar
+            else:  # non-trivial step, use _slice_assign or _slice_assign_scalar
                 key = (key,)
 
         assert isinstance(key, tuple), "key=%s must be a tuple of slices and integers" % str(key)
@@ -765,8 +762,7 @@ fixed-size items.
         indices = self._get_index_nd(key)
         vshape = _get_oshape_of_gather_nd_op(self.shape, indices.shape)
         value_nd = self._prepare_value_nd(value, vshape)
-        _internal._scatter_set_nd(lhs=self, rhs=value_nd, indices=indices,
-                                  shape=self.shape, out=self)
+        _internal._scatter_set_nd(data=value_nd, indices=indices, shape=self.shape, out=self)
 
     def _get_nd_basic_indexing(self, key):
         """This function is called when key is a slice, or an integer,
@@ -866,10 +862,10 @@ fixed-size items.
             except:
                 raise TypeError('array must consist of array-like data,' +
                                 'type %s is not supported' % str(type(array)))
-        source_array = np.asarray(source_array, dtype=self.dtype, order='C')
+        source_array = np.ascontiguousarray(source_array, dtype=self.dtype)
         if source_array.shape != self.shape:
             raise ValueError('Shape inconsistent: expected %s vs got %s'%(
-                str(source_array.shape), str(self.shape)))
+                str(self.shape), str(source_array.shape)))
         check_call(_LIB.MXNDArraySyncCopyFromCPU(
             self.handle,
             source_array.ctypes.data_as(ctypes.c_void_p),
@@ -993,19 +989,6 @@ fixed-size items.
               - input shape = (2,3,4), shape = (-4,1,2,-2), output shape =(1,2,3,4)
               - input shape = (2,3,4), shape = (2,-4,-1,3,-2), output shape = (2,1,3,4)
 
-            - If the argument `reverse` is set to 1, then the special values are inferred from right
-              to left.
-
-              Example::
-
-              - without reverse=1, for input shape = (10,5,4), shape = (-1,0), output shape would be \
-                (40,5).
-              - with reverse=1, output shape will be (50,4).
-
-        reverse : bool, default False
-            If true then the special values are inferred from right to left. Only supported as
-            keyword argument.
-
 
         Returns
         -------
@@ -1046,19 +1029,18 @@ fixed-size items.
         elif not shape:
             shape = kwargs.get('shape')
             assert shape, "Shape must be provided."
-        if not all(k in ['shape', 'reverse'] for k in kwargs):
-            raise TypeError(
-                "Got unknown keywords in reshape: {}. " \
-                "Accepted keyword arguments are 'shape' and 'reverse'.".format(
-                    ', '.join([k for k in kwargs if k not in ['shape', 'reverse']])))
-        reverse = kwargs.get('reverse', False)
+            if len(kwargs) != 1:
+                raise TypeError("Only 'shape' is supported as keyword argument. Got: {}."
+                                .format(', '.join(kwargs.keys())))
+        else:
+            assert not kwargs,\
+                "Specifying both positional and keyword arguments is not allowed in reshape."
         handle = NDArrayHandle()
 
         # Actual reshape
         check_call(_LIB.MXNDArrayReshape64(self.handle,
                                            len(shape),
                                            c_array(ctypes.c_int64, shape),
-                                           reverse,
                                            ctypes.byref(handle)))
         return NDArray(handle=handle, writable=self.writable)
 
@@ -1254,22 +1236,6 @@ fixed-size items.
         """
         return op.flatten(self, *args, **kwargs)
 
-    def shape_array(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`shape_array`.
-
-        The arguments are the same as for :py:func:`shape_array`, with
-        this array as data.
-        """
-        return op.shape_array(self, *args, **kwargs)
-
-    def size_array(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`size_array`.
-
-        The arguments are the same as for :py:func:`size_array`, with
-        this array as data.
-        """
-        return op.size_array(self, *args, **kwargs)
-
     def expand_dims(self, *args, **kwargs):
         """Convenience fluent method for :py:func:`expand_dims`.
 
@@ -1301,30 +1267,6 @@ fixed-size items.
         this array as data.
         """
         return op.flip(self, *args, **kwargs)
-
-    def depth_to_space(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`depth_to_space`.
-
-        The arguments are the same as for :py:func:`depth_to_space`, with
-        this array as data.
-        """
-        return op.depth_to_space(self, *args, **kwargs)
-
-    def space_to_depth(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`space_to_depth`.
-
-        The arguments are the same as for :py:func:`space_to_depth`, with
-        this array as data.
-        """
-        return op.space_to_depth(self, *args, **kwargs)
-
-    def diag(self, k=0, **kwargs):
-        """Convenience fluent method for :py:func:`diag`.
-
-        The arguments are the same as for :py:func:`diag`, with
-        this array as data.
-        """
-        return op.diag(self, k, **kwargs)
 
     def sum(self, *args, **kwargs):
         """Convenience fluent method for :py:func:`sum`.
@@ -1678,14 +1620,6 @@ fixed-size items.
         """
         return op.log_softmax(self, *args, **kwargs)
 
-    def softmin(self, *args, **kwargs):
-        """Convenience fluent method for :py:func:`softmin`.
-
-        The arguments are the same as for :py:func:`softmin`, with
-        this array as data.
-        """
-        return op.softmin(self, *args, **kwargs)
-
     def squeeze(self, *args, **kwargs):
         """Convenience fluent method for :py:func:`squeeze`.
 
@@ -1746,44 +1680,6 @@ fixed-size items.
         else:
             return op.broadcast_to(self, shape=tuple(shape))
     # pylint: enable= undefined-variable
-
-    def broadcast_like(self, other):
-        """Broadcasts the input array to the shape of other.
-
-        Broadcasting is only allowed on axes with size 1. The new shape cannot change
-        the number of dimensions.
-        For example, you could broadcast from shape (2, 1) to (2, 3), but not from
-        shape (2, 3) to (2, 3, 3).
-
-        Parameters
-        ----------
-        other : NDArray
-            Array with shape of the desired array.
-
-        Returns
-        -------
-        NDArray
-            A NDArray with the desired shape that is not sharing data with this
-            array, even if the new shape is the same as ``self.shape``.
-
-        Examples
-        --------
-        >>> x = mx.nd.arange(0,3).reshape((1,3,1))
-        >>> x.asnumpy()
-        array([[[ 0.],
-                [ 1.],
-                [ 2.]]], dtype=float32)
-        >>> y = x.broadcast_like(mx.nd.ones((2,3,3)))
-        >>> y.asnumpy()
-        array([[[ 0.,  0.,  0.],
-                [ 1.,  1.,  1.],
-                [ 2.,  2.,  2.]],
-        <BLANKLINE>
-               [[ 0.,  0.,  0.],
-                [ 1.,  1.,  1.],
-                [ 2.,  2.,  2.]]], dtype=float32)
-        """
-        return self.broadcast_to(other.shape)
 
     def wait_to_read(self):
         """Waits until all previous write operations on the current array are finished.
@@ -2213,52 +2109,6 @@ fixed-size items.
         """
         return op.cast_storage(self, stype=stype)
 
-    def to_dlpack_for_read(self):
-        """Returns a reference view of NDArray that represents as DLManagedTensor until
-        all previous write operations on the current array are finished.
-
-        Returns
-        -------
-        PyCapsule (the pointer of DLManagedTensor)
-            a reference view of NDArray that represents as DLManagedTensor.
-
-        Examples
-        --------
-        >>> x = mx.nd.ones((2,3))
-        >>> y = mx.nd.to_dlpack_for_read(x)
-        >>> type(y)
-        <class 'PyCapsule'>
-        >>> z = mx.nd.from_dlpack(y)
-        >>> z
-        [[1. 1. 1.]
-         [1. 1. 1.]]
-        <NDArray 2x3 @cpu(0)>
-        """
-        return to_dlpack_for_read(self)
-
-    def to_dlpack_for_write(self):
-        """Returns a reference view of NDArray that represents as DLManagedTensor until
-        all previous read/write operations on the current array are finished.
-
-        Returns
-        -------
-        PyCapsule (the pointer of DLManagedTensor)
-            a reference view of NDArray that represents as DLManagedTensor.
-
-        Examples
-        --------
-        >>> x = mx.nd.ones((2,3))
-        >>> w = mx.nd.to_dlpack_for_write(x)
-        >>> type(w)
-        <class 'PyCapsule'>
-        >>> u = mx.nd.from_dlpack(w)
-        >>> u += 1
-        >>> x
-        [[2. 2. 2.]
-         [2. 2. 2.]]
-        <NDArray 2x3 @cpu(0)>
-        """
-        return to_dlpack_for_write(self)
 
 def _get_indexing_dispatch_code(key):
     """Returns a dispatch code for calling basic or advanced indexing functions."""
@@ -2393,7 +2243,7 @@ def ones(shape, ctx=None, dtype=None, **kwargs):
         The shape of the empty array.
     ctx : Context, optional
         An optional device context.
-        Defaults to the current default context (``mxnet.context.current_context()``).
+        Defaults to the current default context (``mxnet.Context.default_ctx``).
     dtype : str or numpy.dtype, optional
         An optional value type (default is `float32`).
     out : NDArray, optional
@@ -2415,7 +2265,7 @@ def ones(shape, ctx=None, dtype=None, **kwargs):
     """
     # pylint: disable= unused-argument
     if ctx is None:
-        ctx = current_context()
+        ctx = Context.default_ctx
     dtype = mx_real_t if dtype is None else dtype
     # pylint: disable= no-member, protected-access
     return _internal._ones(shape=shape, ctx=ctx, dtype=dtype, **kwargs)
@@ -2529,7 +2379,7 @@ def moveaxis(tensor, source, destination):
 
 
 # pylint: disable= no-member, protected-access, too-many-arguments, redefined-outer-name
-def arange(start, stop=None, step=1.0, repeat=1, infer_range=False, ctx=None, dtype=mx_real_t):
+def arange(start, stop=None, step=1.0, repeat=1, ctx=None, dtype=mx_real_t):
     """Returns evenly spaced values within a given interval.
 
     Values are generated within the half-open interval [`start`, `stop`). In other
@@ -2547,9 +2397,6 @@ def arange(start, stop=None, step=1.0, repeat=1, infer_range=False, ctx=None, dt
         Spacing between values. The default step size is 1.
     repeat : int, optional
         Number of times to repeat each element. The default repeat count is 1.
-    infer_range : boolean, optional
-        When set to True, infer the stop position from the start, step,
-        repeat, and output tensor size.
     ctx : Context, optional
         Device context. Default context is the current default context.
     dtype : str or numpy.dtype, optional
@@ -2574,9 +2421,9 @@ def arange(start, stop=None, step=1.0, repeat=1, infer_range=False, ctx=None, dt
     array([2, 2, 2, 4, 4, 4], dtype=int32)
     """
     if ctx is None:
-        ctx = current_context()
+        ctx = Context.default_ctx
     return _internal._arange(start=start, stop=stop, step=step, repeat=repeat,
-                             infer_range=infer_range, dtype=dtype, ctx=str(ctx))
+                             dtype=dtype, ctx=str(ctx))
 # pylint: enable= no-member, protected-access, too-many-arguments
 
 
@@ -2638,13 +2485,13 @@ def add(lhs, rhs):
     .. note::
 
        If the corresponding dimensions of two arrays have the same size or one of them has size 1,
-       then the arrays are broadcastable to a common shape
+       then the arrays are broadcastable to a common shape.
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be added.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be added.
         If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -2704,9 +2551,9 @@ def subtract(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be subtracted.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be subtracted.
         If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -2765,9 +2612,9 @@ def multiply(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be multiplied.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be multiplied.
         If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -2826,9 +2673,9 @@ def divide(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array in division.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array in division.
         The arrays to be divided. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -2883,9 +2730,9 @@ def modulo(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array in modulo.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array in modulo.
         The arrays to be taken modulo. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
@@ -3002,9 +2849,9 @@ def maximum(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3059,9 +2906,9 @@ def minimum(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3120,9 +2967,9 @@ def equal(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3184,9 +3031,9 @@ def not_equal(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3251,9 +3098,9 @@ def greater(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3315,9 +3162,9 @@ def greater_equal(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3379,9 +3226,9 @@ def lesser(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3443,9 +3290,9 @@ def lesser_equal(lhs, rhs):
 
     Parameters
     ----------
-    lhs : scalar or mxnet.ndarray.array
+    lhs : scalar or array
         First array to be compared.
-    rhs : scalar or mxnet.ndarray.array
+    rhs : scalar or array
          Second array to be compared. If ``lhs.shape != rhs.shape``, they must be
         broadcastable to a common shape.
 
@@ -3490,179 +3337,6 @@ def lesser_equal(lhs, rhs):
         _internal._greater_equal_scalar)
     # pylint: enable= no-member, protected-access
 
-def logical_and(lhs, rhs):
-    """Returns the result of element-wise **logical and** comparison
-    operation with broadcasting.
-
-    For each element in input arrays, return 1(true) if lhs elements and rhs elements
-    are true, otherwise return 0(false).
-
-    Equivalent to ``lhs and rhs`` and ``mx.nd.broadcast_logical_and(lhs, rhs)``.
-
-    .. note::
-
-       If the corresponding dimensions of two arrays have the same size or one of them has size 1,
-       then the arrays are broadcastable to a common shape.
-
-    Parameters
-    ----------
-    lhs : scalar or mxnet.ndarray.array
-        First input of the function.
-    rhs : scalar or mxnet.ndarray.array
-         Second input of the function. If ``lhs.shape != rhs.shape``, they must be
-        broadcastable to a common shape.
-
-    Returns
-    -------
-    NDArray
-        Output array of boolean values.
-
-    Examples
-    --------
-    >>> x = mx.nd.ones((2,3))
-    >>> y = mx.nd.arange(2).reshape((2,1))
-    >>> z = mx.nd.arange(2).reshape((1,2))
-    >>> x.asnumpy()
-    array([[ 1.,  1.,  1.],
-           [ 1.,  1.,  1.]], dtype=float32)
-    >>> y.asnumpy()
-    array([[ 0.],
-           [ 1.]], dtype=float32)
-    >>> z.asnumpy()
-    array([[ 0.,  1.]], dtype=float32)
-    >>> mx.nd.logical_and(x, 1).asnumpy()
-    array([[ 1.,  1.,  1.],
-           [ 1.,  1.,  1.]], dtype=float32)
-    >>> mx.nd.logical_and(x, y).asnumpy()
-    array([[ 0.,  0.,  0.],
-           [ 1.,  1.,  1.]], dtype=float32)
-    >>> mx.nd.logical_and(z, y).asnumpy()
-    array([[ 0.,  0.],
-           [ 0.,  1.]], dtype=float32)
-    """
-    # pylint: disable= no-member, protected-access
-    return _ufunc_helper(
-        lhs,
-        rhs,
-        op.broadcast_logical_and,
-        lambda x, y: 1 if x and y else 0,
-        _internal._logical_and_scalar,
-        None)
-    # pylint: enable= no-member, protected-access
-
-def logical_or(lhs, rhs):
-    """Returns the result of element-wise **logical or** comparison
-    operation with broadcasting.
-
-    For each element in input arrays, return 1(true) if lhs elements or rhs elements
-    are true, otherwise return 0(false).
-
-    Equivalent to ``lhs or rhs`` and ``mx.nd.broadcast_logical_or(lhs, rhs)``.
-
-    .. note::
-
-       If the corresponding dimensions of two arrays have the same size or one of them has size 1,
-       then the arrays are broadcastable to a common shape.
-
-    Parameters
-    ----------
-    lhs : scalar or mxnet.ndarray.array
-        First input of the function.
-    rhs : scalar or mxnet.ndarray.array
-         Second input of the function. If ``lhs.shape != rhs.shape``, they must be
-        broadcastable to a common shape.
-
-    Returns
-    -------
-    NDArray
-        Output array of boolean values.
-
-    Examples
-    --------
-    >>> x = mx.nd.ones((2,3))
-    >>> y = mx.nd.arange(2).reshape((2,1))
-    >>> z = mx.nd.arange(2).reshape((1,2))
-    >>> x.asnumpy()
-    array([[ 1.,  1.,  1.],
-           [ 1.,  1.,  1.]], dtype=float32)
-    >>> y.asnumpy()
-    array([[ 0.],
-           [ 1.]], dtype=float32)
-    >>> z.asnumpy()
-    array([[ 0.,  1.]], dtype=float32)
-    >>> mx.nd.logical_or(x, 1).asnumpy()
-    array([[ 1.,  1.,  1.],
-           [ 1.,  1.,  1.]], dtype=float32)
-    >>> mx.nd.logical_or(x, y).asnumpy()
-    array([[ 1.,  1.,  1.],
-           [ 1.,  1.,  1.]], dtype=float32)
-    >>> mx.nd.logical_or(z, y).asnumpy()
-    array([[ 0.,  1.],
-           [ 1.,  1.]], dtype=float32)
-    """
-    # pylint: disable= no-member, protected-access
-    return _ufunc_helper(
-        lhs,
-        rhs,
-        op.broadcast_logical_or,
-        lambda x, y: 1 if x or y else 0,
-        _internal._logical_or_scalar,
-        None)
-    # pylint: enable= no-member, protected-access
-
-def logical_xor(lhs, rhs):
-    """Returns the result of element-wise **logical xor** comparison
-    operation with broadcasting.
-
-    For each element in input arrays, return 1(true) if lhs elements or rhs elements
-    are true, otherwise return 0(false).
-
-    Equivalent to ``bool(lhs) ^ bool(rhs)`` and ``mx.nd.broadcast_logical_xor(lhs, rhs)``.
-
-    .. note::
-
-       If the corresponding dimensions of two arrays have the same size or one of them has size 1,
-       then the arrays are broadcastable to a common shape.
-
-    Parameters
-    ----------
-    lhs : scalar or mxnet.ndarray.array
-        First input of the function.
-    rhs : scalar or mxnet.ndarray.array
-         Second input of the function. If ``lhs.shape != rhs.shape``, they must be
-        broadcastable to a common shape.
-
-    Returns
-    -------
-    NDArray
-        Output array of boolean values.
-
-    Examples
-    --------
-    >>> x = mx.nd.ones((2,3))
-    >>> y = mx.nd.arange(2).reshape((2,1))
-    >>> z = mx.nd.arange(2).reshape((1,2))
-    >>> x.asnumpy()
-    array([[ 1.,  1.,  1.],
-           [ 1.,  1.,  1.]], dtype=float32)
-    >>> y.asnumpy()
-    array([[ 0.],
-           [ 1.]], dtype=float32)
-    >>> z.asnumpy()
-    array([[ 0.,  1.]], dtype=float32)
-    >>> mx.nd.logical_xor(x, y).asnumpy()
-    array([[ 1.,  1.,  1.],
-           [ 0.,  0.,  0.]], dtype=float32)
-    """
-    # pylint: disable= no-member, protected-access
-    return _ufunc_helper(
-        lhs,
-        rhs,
-        op.broadcast_logical_xor,
-        lambda x, y: 1 if bool(x) ^ bool(y) else 0,
-        _internal._logical_xor_scalar,
-        None)
-    # pylint: enable= no-member, protected-access
 
 def true_divide(lhs, rhs):
 
@@ -3801,7 +3475,7 @@ def zeros(shape, ctx=None, dtype=None, **kwargs):
     """
     # pylint: disable= unused-argument
     if ctx is None:
-        ctx = current_context()
+        ctx = Context.default_ctx
     dtype = mx_real_t if dtype is None else dtype
     # pylint: disable= no-member, protected-access
     return _internal._zeros(shape=shape, ctx=ctx, dtype=dtype, **kwargs)
@@ -3809,7 +3483,6 @@ def zeros(shape, ctx=None, dtype=None, **kwargs):
 
 def eye(N, M=0, k=0, ctx=None, dtype=None, **kwargs):
     """Return a 2-D array with ones on the diagonal and zeros elsewhere.
-
     Parameters
     ----------
     N: int
@@ -3824,12 +3497,10 @@ def eye(N, M=0, k=0, ctx=None, dtype=None, **kwargs):
         An optional device context (default is the current default context)
     dtype: str or numpy.dtype, optional
         An optional value type (default is `float32`)
-
     Returns
     -------
     NDArray
         A created array
-
     Examples
     --------
     >>> mx.nd.eye(2)
@@ -3843,7 +3514,7 @@ def eye(N, M=0, k=0, ctx=None, dtype=None, **kwargs):
     """
     # pylint: disable= unused-argument
     if ctx is None:
-        ctx = current_context()
+        ctx = Context.default_ctx
     dtype = mx_real_t if dtype is None else dtype
     # pylint: disable= no-member, protected-access
     return _internal._eye(N=N, M=M, k=k, ctx=ctx, dtype=dtype, **kwargs)
@@ -3871,165 +3542,7 @@ def empty(shape, ctx=None, dtype=None):
     if isinstance(shape, int):
         shape = (shape, )
     if ctx is None:
-        ctx = current_context()
+        ctx = Context.default_ctx
     if dtype is None:
         dtype = mx_real_t
     return NDArray(handle=_new_alloc_handle(shape, ctx, False, dtype))
-
-
-# pylint: disable= redefined-builtin
-def histogram(a, bins=10, range=None):
-    """Compute the histogram of the input data.
-
-    Parameters
-    ----------
-    a : NDArray
-        Input data. The histogram is computed over the flattened array.
-    bins : int or sequence of scalars
-        If bins is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If bins is a sequence, it defines the bin edges,
-        including the rightmost edge, allowing for non-uniform bin widths.
-    range : (float, float), optional
-        The lower and upper range of the bins. If not provided, range is simply (a.min(), a.max()).
-        Values outside the range are ignored. The first element of the range must be less than or
-        equal to the second. range affects the automatic bin computation as well, the range will
-        be equally divided by the number of bins.
-    """
-
-    # pylint: disable= no-member, protected-access
-    if isinstance(bins, NDArray):
-        return _internal._histogram(data=a, bins=bins)
-    elif isinstance(bins, integer_types):
-        if range is None:
-            warnings.warn("range is not specified, using numpy's result "
-                          "to ensure consistency with numpy")
-            res, bin_bounds = np.histogram(a.asnumpy(), bins=bins)
-            return array(res), array(bin_bounds)
-        return _internal._histogram(data=a, bin_cnt=bins, range=range)
-    raise ValueError("bins argument should be either an integer or an NDArray")
-    # pylint: enable= no-member, protected-access, redefined-builtin
-
-PyCapsuleDestructor = ctypes.CFUNCTYPE(None, ctypes.c_void_p)
-_c_str_dltensor = c_str('dltensor')
-_c_str_used_dltensor = c_str('used_dltensor')
-
-def _dlpack_deleter(pycapsule):
-    pycapsule = ctypes.c_void_p(pycapsule)
-    if ctypes.pythonapi.PyCapsule_IsValid(pycapsule, _c_str_dltensor):
-        ptr = ctypes.c_void_p(
-            ctypes.pythonapi.PyCapsule_GetPointer(pycapsule, _c_str_dltensor))
-        check_call(_LIB.MXNDArrayCallDLPackDeleter(ptr))
-
-_c_dlpack_deleter = PyCapsuleDestructor(_dlpack_deleter)
-
-def to_dlpack_for_read(data):
-    """Returns a reference view of NDArray that represents as DLManagedTensor until
-       all previous write operations on the current array are finished.
-
-    Parameters
-    ----------
-    data: NDArray
-        input data.
-
-    Returns
-    -------
-    PyCapsule (the pointer of DLManagedTensor)
-        a reference view of NDArray that represents as DLManagedTensor.
-
-    Examples
-    --------
-    >>> x = mx.nd.ones((2,3))
-    >>> y = mx.nd.to_dlpack_for_read(x)
-    >>> type(y)
-    <class 'PyCapsule'>
-    >>> z = mx.nd.from_dlpack(y)
-    >>> z
-    [[1. 1. 1.]
-     [1. 1. 1.]]
-    <NDArray 2x3 @cpu(0)>
-    """
-    data.wait_to_read()
-    dlpack = DLPackHandle()
-    check_call(_LIB.MXNDArrayToDLPack(data.handle, ctypes.byref(dlpack)))
-    return ctypes.pythonapi.PyCapsule_New(dlpack, _c_str_dltensor, _c_dlpack_deleter)
-
-def to_dlpack_for_write(data):
-    """Returns a reference view of NDArray that represents as DLManagedTensor until
-       all previous read/write operations on the current array are finished.
-
-    Parameters
-    ----------
-    data: NDArray
-        input data.
-
-    Returns
-    -------
-    PyCapsule (the pointer of DLManagedTensor)
-        a reference view of NDArray that represents as DLManagedTensor.
-
-    Examples
-    --------
-    >>> x = mx.nd.ones((2,3))
-    >>> w = mx.nd.to_dlpack_for_write(x)
-    >>> type(w)
-    <class 'PyCapsule'>
-    >>> u = mx.nd.from_dlpack(w)
-    >>> u += 1
-    >>> x
-    [[2. 2. 2.]
-     [2. 2. 2.]]
-    <NDArray 2x3 @cpu(0)>
-    """
-    check_call(_LIB.MXNDArrayWaitToWrite(data.handle))
-    dlpack = DLPackHandle()
-    check_call(_LIB.MXNDArrayToDLPack(data.handle, ctypes.byref(dlpack)))
-    return ctypes.pythonapi.PyCapsule_New(dlpack, _c_str_dltensor, _c_dlpack_deleter)
-
-def from_dlpack(dlpack):
-    """Returns a NDArray backed by a dlpack tensor.
-
-    Parameters
-    ----------
-    dlpack: PyCapsule (the pointer of DLManagedTensor)
-        input data
-
-    Returns
-    -------
-    NDArray
-        a NDArray backed by a dlpack tensor
-
-    Examples
-    --------
-    >>> x = mx.nd.ones((2,3))
-    >>> y = mx.nd.to_dlpack_for_read(x)
-    >>> type(y)
-    <class 'PyCapsule'>
-    >>> z = mx.nd.from_dlpack(y)
-    >>> type(z)
-    <class 'mxnet.ndarray.ndarray.NDArray'>
-    >>> z
-    [[ 1.  1.  1.]
-     [ 1.  1.  1.]]
-    <NDArray 2x3 @cpu(0)>
-
-    >>> w = mx.nd.to_dlpack_for_write(x)
-    >>> type(w)
-    <class 'PyCapsule'>
-    >>> u = mx.nd.from_dlpack(w)
-    >>> u += 1
-    >>> x
-    [[2. 2. 2.]
-     [2. 2. 2.]]
-    <NDArray 2x3 @cpu(0)>
-    """
-    handle = NDArrayHandle()
-    dlpack = ctypes.py_object(dlpack)
-    assert ctypes.pythonapi.PyCapsule_IsValid(dlpack, _c_str_dltensor), ValueError(
-        'Invalid DLPack Tensor. DLTensor capsules can be consumed only once.')
-    dlpack_handle = ctypes.c_void_p(ctypes.pythonapi.PyCapsule_GetPointer(dlpack, _c_str_dltensor))
-    check_call(_LIB.MXNDArrayFromDLPack(dlpack_handle, ctypes.byref(handle)))
-    # Rename PyCapsule (DLPack)
-    ctypes.pythonapi.PyCapsule_SetName(dlpack, _c_str_used_dltensor)
-    # delete the deleter of the old dlpack
-    ctypes.pythonapi.PyCapsule_SetDestructor(dlpack, None)
-    return NDArray(handle=handle)

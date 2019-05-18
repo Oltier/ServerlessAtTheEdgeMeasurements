@@ -23,46 +23,33 @@ __all__ = ['MobileNet', 'MobileNetV2', 'mobilenet1_0', 'mobilenet_v2_1_0', 'mobi
            'mobilenet_v2_0_25', 'get_mobilenet', 'get_mobilenet_v2']
 
 __modify__ = 'dwSun'
-__modified_date__ = '18/04/18'
+__modified_date__ = '18/01/31'
 
 import os
 
 from ... import nn
 from ....context import cpu
 from ...block import HybridBlock
-from .... import base
 
 
 # Helpers
-class RELU6(nn.HybridBlock):
-    """Relu6 used in MobileNetV2."""
-
-    def __init__(self, **kwargs):
-        super(RELU6, self).__init__(**kwargs)
-
-    def hybrid_forward(self, F, x):
-        return F.clip(x, 0, 6, name="relu6")
-
-
 # pylint: disable= too-many-arguments
-def _add_conv(out, channels=1, kernel=1, stride=1, pad=0,
-              num_group=1, active=True, relu6=False):
+def _add_conv(out, channels=1, kernel=1, stride=1, pad=0, num_group=1, active=True):
     out.add(nn.Conv2D(channels, kernel, stride, pad, groups=num_group, use_bias=False))
     out.add(nn.BatchNorm(scale=True))
     if active:
-        out.add(RELU6() if relu6 else nn.Activation('relu'))
+        out.add(nn.Activation('relu'))
 
 
-def _add_conv_dw(out, dw_channels, channels, stride, relu6=False):
-    _add_conv(out, channels=dw_channels, kernel=3, stride=stride,
-              pad=1, num_group=dw_channels, relu6=relu6)
-    _add_conv(out, channels=channels, relu6=relu6)
+def _add_conv_dw(out, dw_channels, channels, stride):
+    _add_conv(out, channels=dw_channels, kernel=3, stride=stride, pad=1, num_group=dw_channels)
+    _add_conv(out, channels=channels)
 
 
 class LinearBottleneck(nn.HybridBlock):
     r"""LinearBottleneck used in MobileNetV2 model from the
     `"Inverted Residuals and Linear Bottlenecks:
-    Mobile Networks for Classification, Detection and Segmentation"
+      Mobile Networks for Classification, Detection and Segmentation"
     <https://arxiv.org/abs/1801.04381>`_ paper.
 
     Parameters
@@ -83,10 +70,10 @@ class LinearBottleneck(nn.HybridBlock):
         with self.name_scope():
             self.out = nn.HybridSequential()
 
-            _add_conv(self.out, in_channels * t, relu6=True)
+            _add_conv(self.out, in_channels * t)
             _add_conv(self.out, in_channels * t, kernel=3, stride=stride,
-                      pad=1, num_group=in_channels * t, relu6=True)
-            _add_conv(self.out, channels, active=False, relu6=True)
+                      pad=1, num_group=in_channels * t)
+            _add_conv(self.out, channels, active=False)
 
     def hybrid_forward(self, F, x):
         out = self.out(x)
@@ -138,7 +125,7 @@ class MobileNet(HybridBlock):
 class MobileNetV2(nn.HybridBlock):
     r"""MobileNetV2 model from the
     `"Inverted Residuals and Linear Bottlenecks:
-    Mobile Networks for Classification, Detection and Segmentation"
+      Mobile Networks for Classification, Detection and Segmentation"
     <https://arxiv.org/abs/1801.04381>`_ paper.
 
     Parameters
@@ -156,21 +143,21 @@ class MobileNetV2(nn.HybridBlock):
             self.features = nn.HybridSequential(prefix='features_')
             with self.features.name_scope():
                 _add_conv(self.features, int(32 * multiplier), kernel=3,
-                          stride=2, pad=1, relu6=True)
+                          stride=2, pad=1)
 
                 in_channels_group = [int(x * multiplier) for x in [32] + [16] + [24] * 2
                                      + [32] * 3 + [64] * 4 + [96] * 3 + [160] * 3]
                 channels_group = [int(x * multiplier) for x in [16] + [24] * 2 + [32] * 3
                                   + [64] * 4 + [96] * 3 + [160] * 3 + [320]]
                 ts = [1] + [6] * 16
-                strides = [1, 2] * 2 + [1, 1, 2] + [1] * 6 + [2] + [1] * 3
+                strides = [1, 2] * 2 + [1] * 6 + [2, 1, 1] * 2 + [1]
 
                 for in_c, c, t, s in zip(in_channels_group, channels_group, ts, strides):
                     self.features.add(LinearBottleneck(in_channels=in_c, channels=c,
                                                        t=t, stride=s))
 
                 last_channels = int(1280 * multiplier) if multiplier > 1.0 else 1280
-                _add_conv(self.features, last_channels, relu6=True)
+                _add_conv(self.features, last_channels)
 
                 self.features.add(nn.GlobalAvgPool2D())
 
@@ -189,7 +176,7 @@ class MobileNetV2(nn.HybridBlock):
 
 # Constructor
 def get_mobilenet(multiplier, pretrained=False, ctx=cpu(),
-                  root=os.path.join(base.data_dir(), 'models'), **kwargs):
+                  root=os.path.join('~', '.mxnet', 'models'), **kwargs):
     r"""MobileNet model from the
     `"MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications"
     <https://arxiv.org/abs/1704.04861>`_ paper.
@@ -204,7 +191,7 @@ def get_mobilenet(multiplier, pretrained=False, ctx=cpu(),
         Whether to load the pretrained weights for model.
     ctx : Context, default CPU
         The context in which to load the pretrained weights.
-    root : str, default $MXNET_HOME/models
+    root : str, default '~/.mxnet/models'
         Location for keeping the model parameters.
     """
     net = MobileNet(multiplier, **kwargs)
@@ -220,10 +207,10 @@ def get_mobilenet(multiplier, pretrained=False, ctx=cpu(),
 
 
 def get_mobilenet_v2(multiplier, pretrained=False, ctx=cpu(),
-                     root=os.path.join(base.data_dir(), 'models'), **kwargs):
+                     root=os.path.join('~', '.mxnet', 'models'), **kwargs):
     r"""MobileNetV2 model from the
     `"Inverted Residuals and Linear Bottlenecks:
-    Mobile Networks for Classification, Detection and Segmentation"
+      Mobile Networks for Classification, Detection and Segmentation"
     <https://arxiv.org/abs/1801.04381>`_ paper.
 
     Parameters
@@ -236,7 +223,7 @@ def get_mobilenet_v2(multiplier, pretrained=False, ctx=cpu(),
         Whether to load the pretrained weights for model.
     ctx : Context, default CPU
         The context in which to load the pretrained weights.
-    root : str, default $MXNET_HOME/models
+    root : str, default '~/.mxnet/models'
         Location for keeping the model parameters.
     """
     net = MobileNetV2(multiplier, **kwargs)
@@ -269,7 +256,7 @@ def mobilenet1_0(**kwargs):
 def mobilenet_v2_1_0(**kwargs):
     r"""MobileNetV2 model from the
     `"Inverted Residuals and Linear Bottlenecks:
-    Mobile Networks for Classification, Detection and Segmentation"
+      Mobile Networks for Classification, Detection and Segmentation"
     <https://arxiv.org/abs/1801.04381>`_ paper.
 
     Parameters
@@ -300,7 +287,7 @@ def mobilenet0_75(**kwargs):
 def mobilenet_v2_0_75(**kwargs):
     r"""MobileNetV2 model from the
     `"Inverted Residuals and Linear Bottlenecks:
-    Mobile Networks for Classification, Detection and Segmentation"
+      Mobile Networks for Classification, Detection and Segmentation"
     <https://arxiv.org/abs/1801.04381>`_ paper.
 
     Parameters
@@ -331,7 +318,7 @@ def mobilenet0_5(**kwargs):
 def mobilenet_v2_0_5(**kwargs):
     r"""MobileNetV2 model from the
     `"Inverted Residuals and Linear Bottlenecks:
-    Mobile Networks for Classification, Detection and Segmentation"
+      Mobile Networks for Classification, Detection and Segmentation"
     <https://arxiv.org/abs/1801.04381>`_ paper.
 
     Parameters
@@ -362,7 +349,7 @@ def mobilenet0_25(**kwargs):
 def mobilenet_v2_0_25(**kwargs):
     r"""MobileNetV2 model from the
     `"Inverted Residuals and Linear Bottlenecks:
-    Mobile Networks for Classification, Detection and Segmentation"
+      Mobile Networks for Classification, Detection and Segmentation"
     <https://arxiv.org/abs/1801.04381>`_ paper.
 
     Parameters

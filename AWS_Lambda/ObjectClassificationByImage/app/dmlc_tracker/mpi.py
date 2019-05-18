@@ -14,7 +14,6 @@ def get_mpi_env(envs):
     support both openmpi and mpich2
     """
 
-    cmd = ''
     # windows hack: we will use msmpi
     if sys.platform == 'win32':
         for k, v in envs.items():
@@ -22,13 +21,14 @@ def get_mpi_env(envs):
         return cmd
 
     # decide MPI version.
-    (out, err) = subprocess.Popen(['mpirun', '--version'],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE).communicate()
-    if b'Open MPI' in out:
+    (_, err) = subprocess.Popen(['mpirun','--verion'],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE).communicate()
+    cmd = ''
+    if 'Open MPI' in err:
         for k, v in envs.items():
             cmd += ' -x %s=%s' % (k, str(v))
-    elif b'mpich' in err:
+    elif 'mpich' in err:
         for k, v in envs.items():
             cmd += ' -env %s %s' % (k, str(v))
     else:
@@ -69,7 +69,7 @@ def submit(args):
             logging.info('Start %d servers by mpirun' % nserver)
             pass_envs['DMLC_ROLE'] = 'server'
             if sys.platform == 'win32':
-                prog = 'mpiexec -n %d %s %s' % (nserver, get_mpi_env(pass_envs), cmd)
+                prog = 'mpiexec -n %d %s %s' % (nworker, get_mpi_env(pass_envs), cmd)
             else:
                 prog = 'mpirun -n %d %s %s' % (nserver, get_mpi_env(pass_envs), cmd)
             thread = Thread(target=run, args=(prog,))

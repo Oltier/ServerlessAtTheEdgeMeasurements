@@ -27,8 +27,7 @@ import numpy as np
 from ..io import DataIter, DataBatch, DataDesc
 from .. import ndarray
 
-def encode_sentences(sentences, vocab=None, invalid_label=-1, invalid_key='\n',
-                     start_label=0, unknown_token=None):
+def encode_sentences(sentences, vocab=None, invalid_label=-1, invalid_key='\n', start_label=0):
     """Encode sentences and (optionally) build a mapping
     from string tokens to integer indices. Unknown keys
     will be added to vocabulary.
@@ -47,9 +46,6 @@ def encode_sentences(sentences, vocab=None, invalid_label=-1, invalid_key='\n',
         of sentence by default.
     start_label : int
         lowest index.
-    unknown_token: str
-        Symbol to represent unknown token.
-        If not specified, unknown token will be skipped.
 
     Returns
     -------
@@ -69,11 +65,9 @@ def encode_sentences(sentences, vocab=None, invalid_label=-1, invalid_key='\n',
         coded = []
         for word in sent:
             if word not in vocab:
-                assert (new_vocab or unknown_token), "Unknown token %s"%word
+                assert new_vocab, "Unknown token %s"%word
                 if idx == invalid_label:
                     idx += 1
-                if unknown_token:
-                    word = unknown_token
                 vocab[word] = idx
                 idx += 1
             coded.append(vocab[word])
@@ -117,21 +111,16 @@ class BucketSentenceIter(DataIter):
 
         ndiscard = 0
         self.data = [[] for _ in buckets]
-        valid_buckets = {}
-        for item in range(len(buckets)):
-            valid_buckets[item] = 0
-
         for i, sent in enumerate(sentences):
             buck = bisect.bisect_left(buckets, len(sent))
-            valid_buckets[buck] = 1
             if buck == len(buckets):
                 ndiscard += 1
                 continue
             buff = np.full((buckets[buck],), invalid_label, dtype=dtype)
             buff[:len(sent)] = sent
             self.data[buck].append(buff)
-        buckets = [j for i, j in enumerate(buckets) if valid_buckets[i] == 1]
-        self.data = [np.asarray(i, dtype=dtype) for i in self.data if i]
+
+        self.data = [np.asarray(i, dtype=dtype) for i in self.data]
 
         print("WARNING: discarded %d sentences longer than the largest bucket."%ndiscard)
 

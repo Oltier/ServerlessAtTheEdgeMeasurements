@@ -464,7 +464,7 @@ class CustomOp(object):
         """Helper function for assigning into dst depending on requirements."""
         if req == 'null':
             return
-        elif req in ('write', 'inplace'):
+        elif req == 'write' or req == 'inplace':
             dst[:] = src
         elif req == 'add':
             dst[:] += src
