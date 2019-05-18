@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
-from scipy.stats import mannwhitneyu, levene
+from scipy.stats import mannwhitneyu, levene, rankdata, tiecorrect
 
 
 def calc_processing_delay(row):
@@ -91,9 +91,25 @@ z = (stat_mw - m_u) / sigma_u
 
 print("z Mann-whitney: {}".format(z))
 
-r = z / np.sqrt(len_overall_delay_aws)
+r = z / np.sqrt(len_overall_delay_azure + len_overall_delay_aws)
 
 print("r Mann-whitney: {}".format(r))
+
+x = np.asarray(df_azure_stats['overall_delay'])
+y = np.asarray(df_aws_stats['overall_delay'])
+n1 = len(x)
+n2 = len(y)
+ranked = rankdata(np.concatenate((x, y)))
+rankx = ranked[0:n1]  # get the x-ranks
+ranky = ranked[n1:]
+
+meanrank = n1*n2/2.0 + 0.5
+rankx_mean = np.mean(rankx)
+ranky_mean = np.mean(ranky)
+
+print("Mann-whitney rankx mean: {}".format(rankx_mean))
+print("Mann-whitney ranky mean: {}".format(ranky_mean))
+
 
 stats_levene, p_levene = levene(df_azure_stats['overall_delay'], df_aws_stats['overall_delay'])
 
