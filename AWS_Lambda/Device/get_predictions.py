@@ -22,7 +22,7 @@ import base64
 import timeit
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
-stats = open('stats.csv', 'w+')
+stats = open('stats.csv', 'a+')
 stats.write("message_sent,processing_start_time,processing_end_time,message_arrived,network_delay,processing_delay,"
             "overall_delay\n")
 
@@ -81,7 +81,7 @@ myMQTTClient.subscribe(response_topic, 0, customOnMessage)
 i = 0
 
 try:
-    while True and i < 500:
+    while True and i < 3:
         i += 1
         fd = open('test.jpg')
         img_str = fd.read()
