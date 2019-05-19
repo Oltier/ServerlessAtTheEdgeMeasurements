@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'sam-app
+
+  Sample SAM Template for sam-app
+
+  '
+Globals:
+  Function:
+    Timeout: 3
+Resources:
+  ObjectClassificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://serverless-at-the-edge/28638d692fe29ab79ff5b89b96234f1c
+      Handler: main_on_demand.function_handler
+      Runtime: python2.7
+      Events:
+        Predictions:
+          Type: Api
+          Properties:
+            Path: /get-predictions
+            Method: get
+Outputs:
+  ObjectClassificationApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get-predictions/
+  ObjectClassificationFunction:
+    Description: Hello World Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - ObjectClassificationFunction
+      - Arn
+  ObjectClassificationFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value:
+      Fn::GetAtt:
+      - ObjectClassificationFunction
+      - Arn
