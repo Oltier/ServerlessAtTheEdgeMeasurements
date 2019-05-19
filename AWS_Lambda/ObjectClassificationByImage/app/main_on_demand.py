@@ -14,7 +14,9 @@ model = load_model.Model(model_path + 'synset.txt', model_path + 'squeezenet_v1.
 def object_classification_run(input_payload):
     if model is not None:
         processing_start_time = timeit.default_timer()
-        input_payload = json.loads(input_payload)
+        print(input_payload)
+        print(type(input_payload))
+        # input_payload = json.loads(input_payload)
         original_message = input_payload['message']
         image_string = base64.b64decode(original_message)
         predictions = model.predict_from_image(image_string)
@@ -32,7 +34,7 @@ def object_classification_run(input_payload):
 
 
 def function_handler(event, context):
-    response_payload = object_classification_run(event['body'])
+    response_payload = object_classification_run(event)
     client.publish(topic='object_classification/response', payload=response_payload, qos=0)
     return {
         'statusCode': 200,
