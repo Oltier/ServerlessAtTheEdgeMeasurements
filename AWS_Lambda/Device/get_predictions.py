@@ -92,7 +92,7 @@ try:
         print("Sent size: {}".format(str(size)))
         myMQTTClient.publish(request_topic, messageJson, 0)
         print('Request {} Published to topic {}\n'.format(i, request_topic))
-        # time.sleep(2)
+        time.sleep(1)
 except KeyboardInterrupt:
     stats.close()
     exit(0)
