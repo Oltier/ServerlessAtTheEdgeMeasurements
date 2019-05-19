@@ -128,3 +128,4 @@ pip-selfcheck.json
 /Azure/Device/certs
 /Azure/Device/azure-iot-sdk-python/device/samples/azure-iot-test-only.root.ca.cert.pem
 /AWS_Lambda/ObjectClassificationByImage/envs/
+/AWS_Lambda/Device/secrets/

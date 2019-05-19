@@ -1,10 +1,11 @@
-import sys
 import timeit
-import traceback
 import json
 import base64
+import boto3
 
 import load_model
+
+client = boto3.client('iot-data')
 
 model_path = './squeezenet/'
 model = load_model.Model(model_path + 'synset.txt', model_path + 'squeezenet_v1.1')
@@ -32,6 +33,7 @@ def object_classification_run(input_payload):
 
 def function_handler(event, context):
     response_payload = object_classification_run(event['body'])
+    client.publish(topic='object_classification/response', payload=response_payload, qos=0)
     return {
         'statusCode': 200,
         'body': response_payload

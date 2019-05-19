@@ -12,7 +12,7 @@ Resources:
   ObjectClassificationFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://serverless-at-the-edge/28638d692fe29ab79ff5b89b96234f1c
+      CodeUri: s3://serverless-at-the-edge/3c4437a5e4f1e8b172f1d59795e09692
       Handler: main_on_demand.function_handler
       Runtime: python2.7
       Events:
