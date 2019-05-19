@@ -27,8 +27,9 @@ from AWSIoTPythonSDK.core.protocol.connection.cores import ProgressiveBackOffCor
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.exception.AWSIoTExceptions import DiscoveryInvalidRequestException
 
-stats = open('stats.json', 'a+')
-
+stats = open('stats.csv', 'w+')
+stats.write("message_sent,processing_start_time,processing_end_time,message_arrived,network_delay,processing_delay,"
+            "overall_delay\n")
 
 # General message notification callback
 def customOnMessage(message):
@@ -37,11 +38,20 @@ def customOnMessage(message):
     print("Received size: {}".format(str(size)))
     payload = json.loads(message.payload)
     del payload['prediction']
-    diff = message_arrived - payload['message_sent']
-    payload['diff'] = diff
+    overall_delay = message_arrived - payload['message_sent']
+    payload['overall_delay'] = overall_delay
     payload['message_arrived'] = message_arrived
+    payload['processing_delay'] = payload['processing_end_time'] - payload['processing_start_time']
+    payload['network_delay'] = payload['overall_delay'] - payload['processing_delay']
     print(payload)
-    stats.write("{},\n".format(json.dumps(payload)))
+    stats.write("{},{},{},{},{},{},{}\n"
+                .format(payload['message_sent'],
+                        payload['processing_start_time'],
+                        payload['processing_end_time'],
+                        payload['message_arrived'],
+                        payload['network_delay'],
+                        payload['processing_delay'],
+                        payload['overall_delay']))
     print "Diff between message_sent and message_arrived: {}".format(message_arrived - payload['message_sent'])
 
 
