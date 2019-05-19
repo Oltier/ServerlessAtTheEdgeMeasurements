@@ -60,9 +60,9 @@ GROUP_CA_PATH = "./groupCA/"
 
 endpoint = open('secrets/endpoint', 'r')
 host = endpoint.readline()
-rootCAPath = 'secrets/root-ca-cert.pem'
-certificatePath = 'secrets/30e01d241d.cert.pem'
-privateKeyPath = 'secrets/30e01d241d.private.key'
+rootCAPath = 'secrets/AmazonRootCA1.pem'
+certificatePath = 'secrets/0348f22877.cert.pem'
+privateKeyPath = 'secrets/0348f22877.private.key'
 thingName = 'MeasurementSensor'
 clientId = thingName
 thingName = thingName
