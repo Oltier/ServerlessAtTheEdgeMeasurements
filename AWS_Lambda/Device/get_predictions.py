@@ -14,17 +14,17 @@
 # */
 
 
-import os
 import sys
 import time
-import uuid
 import json
 import logging
 import base64
 import timeit
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
-stats = open('stats.json', 'a+')
+stats = open('stats.csv', 'w+')
+stats.write("message_sent,processing_start_time,processing_end_time,message_arrived,network_delay,processing_delay,"
+            "overall_delay\n")
 
 
 # General message notification callback
@@ -34,11 +34,20 @@ def customOnMessage(client, userdata, message):
     print("Received size: {}".format(str(size)))
     payload = json.loads(message.payload)
     del payload['prediction']
-    diff = message_arrived - payload['message_sent']
-    payload['diff'] = diff
+    overall_delay = message_arrived - payload['message_sent']
+    payload['overall_delay'] = overall_delay
     payload['message_arrived'] = message_arrived
+    payload['processing_delay'] = payload['processing_end_time'] - payload['processing_start_time']
+    payload['network_delay'] = payload['overall_delay'] - payload['processing_delay']
     print(payload)
-    stats.write("{},\n".format(json.dumps(payload)))
+    stats.write("{},{},{},{},{},{},{}\n"
+                .format(payload['message_sent'],
+                        payload['processing_start_time'],
+                        payload['processing_end_time'],
+                        payload['message_arrived'],
+                        payload['network_delay'],
+                        payload['processing_delay'],
+                        payload['overall_delay']))
     print "Diff between message_sent and message_arrived: {}".format(message_arrived - payload['message_sent'])
 
 
@@ -67,12 +76,12 @@ myMQTTClient.configureEndpoint('a2ks8xis7xopez-ats.iot.eu-central-1.amazonaws.co
 myMQTTClient.configureCredentials(rootCAPath, privateKeyPath, certificatePath)
 
 myMQTTClient.connect()
-myMQTTClient.subscribe(response_topic, 1, customOnMessage)
+myMQTTClient.subscribe(response_topic, 0, customOnMessage)
 
 i = 0
 
 try:
-    while True and i < 2:
+    while True and i < 500:
         i += 1
         fd = open('test.jpg')
         img_str = fd.read()
@@ -83,7 +92,7 @@ try:
         print("Sent size: {}".format(str(size)))
         myMQTTClient.publish(request_topic, messageJson, 0)
         print('Request {} Published to topic {}\n'.format(i, request_topic))
-        time.sleep(1)
+        time.sleep(2)
 except KeyboardInterrupt:
     stats.close()
     exit(0)
