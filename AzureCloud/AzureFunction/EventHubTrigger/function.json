@@ -1,0 +1,14 @@
+{
+  "scriptFile": "__init__.py",
+  "entryPoint": "main",
+  "bindings": [
+    {
+      "type": "eventHubTrigger",
+      "name": "myIoTHubMessage",
+      "direction": "in",
+      "eventHubName": "azurefunctionshub",
+      "connection": "AzureFunctionsHub_events_IOTHUB",
+      "consumerGroup": "$Default"
+    }
+  ]
+}
