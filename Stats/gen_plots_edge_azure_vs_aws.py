@@ -59,7 +59,7 @@ if p_2 < alpha:
 else:
     print("The null hypothesis cannot be rejected for aws, not normal distribution")
 
-print("Stat normal test aws: {}".format(k2))
+print("Stat normal test aws: {}".format(k2_2))
 
 print("AWS overall delay mean: {}".format(df_aws_stats['overall_delay'].mean()))
 print("AWS overall delay std: {}".format(df_aws_stats['overall_delay'].std()))
