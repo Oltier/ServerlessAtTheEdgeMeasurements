@@ -59,7 +59,23 @@ print("AWS Lambda overall delay skew: {}".format(stats.skew(df_lambda_stats['ove
 print("AWS Lambda overall delay kurtosis: {}".format(stats.kurtosis(df_lambda_stats['overall_delay'])))
 
 
+k2, p = stats.normaltest(df_lambda_stats['overall_delay'])
+k2_2, p_2 = stats.normaltest(df_aws_stats['overall_delay'])
 
+if p < alpha:
+    print("The null hypothesis can be rejected for AWS Lambda: not normal distribution")
+else:
+    print("The null hypothesis can be accepted for AWS Lambda: not normal distribution")
+print("AWS Lambda overall delay normaltest p_2: {}".format(p))
+print("Stat normal test aws lambda: {}".format(k2))
+
+if p_2 < alpha:
+    print("The null hypothesis can be rejected for AWS Greengrass: not normal distribution")
+else:
+    print("The null hypothesis can be accepted for aws: normal distribution")
+
+print("AWS Greengrass overall delay normaltest p_2: {}".format(p_2))
+print("Stat normal test aws greengrass: {}".format(k2_2))
 
 greengrass_vs_lambda_overall_delay = pd.DataFrame({
     'overall_delay': np.concatenate((df_aws_stats['overall_delay'].values, df_lambda_stats['overall_delay'].values)),

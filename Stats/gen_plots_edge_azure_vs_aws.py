@@ -36,9 +36,9 @@ print("Azure overall delay std: {}".format(df_azure_stats['overall_delay'].std()
 print("Azure overall delay median: {}".format(df_azure_stats['overall_delay'].median()))
 print("Azure overall delay normaltest p: {}".format(p))
 if p < alpha:
-    print("The null hypothesis can be rejected for azure, normal distribution")
+    print("The null hypothesis can be rejected for azure: not normal distribution")
 else:
-    print("The null hypothesis cannot be rejected for azure, not normal distribution")
+    print("The null hypothesis can be accepted for azure: normal distribution")
 print("Stat normal test azure: {}".format(k2))
 
 print("Azure network delay mean: {}".format(df_azure_stats['network_delay'].mean()))
@@ -55,9 +55,9 @@ df_aws_stats['overall_delay'] = df_aws_stats.apply(calc_overall_delay, axis=1)
 k2_2, p_2 = stats.normaltest(df_aws_stats['overall_delay'])
 print("AWS overall delay normaltest p_2: {}".format(p_2))
 if p_2 < alpha:
-    print("The null hypothesis can be rejected for aws, normal distribution")
+    print("The null hypothesis can be rejected for aws: not normal distribution")
 else:
-    print("The null hypothesis cannot be rejected for aws, not normal distribution")
+    print("The null hypothesis can be accepted for aws: normal distribution")
 
 print("Stat normal test aws: {}".format(k2_2))
 
