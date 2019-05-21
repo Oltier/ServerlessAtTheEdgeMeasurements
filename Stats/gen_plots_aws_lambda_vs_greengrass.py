@@ -48,8 +48,19 @@ print("AWS Greengrass processing delay mean: {}".format(df_aws_stats['processing
 print("AWS Greengrass processing delay std: {}".format(df_aws_stats['processing_delay'].std()))
 print("AWS Greengrass processing delay median: {}".format(df_aws_stats['processing_delay'].median()))
 
+
 x = np.arange(0, 500, 1)
 df_lambda_stats = pd.read_csv('stats_lambda_1024mb.csv', delimiter=',')
+
+
+print("AWS Greengrass overall delay skew: {}".format(stats.skew(df_aws_stats['overall_delay'])))
+print("AWS Greengrass overall delay kurtosis: {}".format(stats.kurtosis(df_aws_stats['overall_delay'])))
+print("AWS Lambda overall delay skew: {}".format(stats.skew(df_lambda_stats['overall_delay'])))
+print("AWS Lambda overall delay kurtosis: {}".format(stats.kurtosis(df_lambda_stats['overall_delay'])))
+
+
+
+
 greengrass_vs_lambda_overall_delay = pd.DataFrame({
     'overall_delay': np.concatenate((df_aws_stats['overall_delay'].values, df_lambda_stats['overall_delay'].values)),
     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
