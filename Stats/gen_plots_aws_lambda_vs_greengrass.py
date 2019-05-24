@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
+from statsmodels.stats.anova import anova_lm
 from statsmodels.stats.anova import AnovaRM
+from statsmodels.stats.multicomp import MultiComparison
 from statsmodels.formula.api import ols
 import pyvttbl as pt
 from collections import namedtuple
@@ -130,6 +132,16 @@ print("Stat normal test aws greengrass processing delay: {}".format(k2_greengras
 #     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
 # })
 
+x = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1)))
+df_spss = pd.DataFrame({
+    'id': x,
+    'platform': np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500))),
+    'network_delay': np.concatenate((df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values)),
+    'processing_delay': np.concatenate((df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
+})
+
+df_spss.to_csv('df_spss.csv', header=True, index=None)
+
 sub_id = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1)))
 rt = np.concatenate(
     (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values, df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
@@ -153,15 +165,50 @@ iv2 = np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 
 
 df_pd = pd.DataFrame({
     'sub_id': sub_id,
-    'rt': rt,
-    'iv1': iv1,
-    'iv2': iv2
+    'delay': rt,
+    'delay_type': iv1,
+    'platform': iv2
 })
 
-aovrm2way = AnovaRM(df_pd, 'rt', 'sub_id', within=['iv1', 'iv2'])
-res2way = aovrm2way.fit()
+#
+# aovrm2way = AnovaRM(df_pd, 'delay', 'sub_id', within=['delay_type', 'platform'])
+# res2way = aovrm2way.fit()
+#
+# print(res2way)
 
-print(res2way.summary())
+
+# ************Statsmodel with ols ***********
+
+ols_model = ols('delay ~ C(delay_type)*C(platform)', df_pd).fit()
+
+# print("Overall model F({ols_model.df_model: .0f},{ols_model.df_resid: .0f}) = {ols_model.fvalue: .3f}, p = {ols_model.f_pvalue: .4f}")
+print("Overall model F({},{}) = {}, p = {}".format(ols_model.df_model, ols_model.df_resid, ols_model.fvalue, ols_model.f_pvalue))
+
+print(ols_model.summary())
+
+res2 = anova_lm(ols_model, typ=2)
+
+# Calculating effect size
+def anova_table(aov):
+    aov['mean_sq'] = aov[:]['sum_sq']/aov[:]['df']
+
+    aov['eta_sq'] = aov[:-1]['sum_sq']/sum(aov['sum_sq'])
+
+    aov['omega_sq'] = (aov[:-1]['sum_sq']-(aov[:-1]['df']*aov['mean_sq'][-1]))/(sum(aov['sum_sq'])+aov['mean_sq'][-1])
+
+    cols = ['sum_sq', 'mean_sq', 'df', 'F', 'PR(>F)', 'eta_sq', 'omega_sq']
+    aov = aov[cols]
+    return aov
+
+anova_table(res2)
+
+print(res2)
+
+
+# ********** Post hoc testing ***************
+mc = MultiComparison(df_pd['delay'], df_pd['delay_type'])
+print(mc.tukeyhsd())
+
 
 # greengrass_vs_lambda = pd.DataFrame({
 #     'overall_delay': np.concatenate(
