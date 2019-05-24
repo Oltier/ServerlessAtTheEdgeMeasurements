@@ -130,3 +130,5 @@ pip-selfcheck.json
 /AWS_Lambda/ObjectClassificationByImage/envs/
 /AWS_Lambda/Device/secrets/
 /AzureCloud/Device/certs/
+/AWS_Lambda/Device/AWSIoTPythonSDK/
+/AWS_Lambda/Device/AWSIoTPythonSDK-1.4.6.dist-info/

@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
-from scipy.stats import mannwhitneyu, levene, rankdata, tiecorrect
+
+import pyvttbl as pt
+from collections import namedtuple
 
 
 def calc_processing_delay(row):
@@ -21,6 +22,7 @@ def calc_network_delay_azure(row):
 def calc_overall_delay(row):
     return row['processing_delay'] + row['network_delay']
 
+
 df_greengrass_stats = pd.read_csv('AWS_stats.csv', delimiter=',')
 
 alpha = 0.05
@@ -28,15 +30,6 @@ alpha = 0.05
 df_greengrass_stats['processing_delay'] = df_greengrass_stats.apply(calc_processing_delay, axis=1)
 df_greengrass_stats['network_delay'] = df_greengrass_stats.apply(calc_network_delay_aws, axis=1)
 df_greengrass_stats['overall_delay'] = df_greengrass_stats.apply(calc_overall_delay, axis=1)
-
-k2_greengrass_overall_delay, p_aws_greengrass_overall_delay = stats.normaltest(df_greengrass_stats['overall_delay'])
-print("AWS overall delay normaltest p_2: {}".format(p_aws_greengrass_overall_delay))
-if p_aws_greengrass_overall_delay < alpha:
-    print("The null hypothesis can be rejected for aws, normal distribution")
-else:
-    print("The null hypothesis cannot be rejected for aws, not normal distribution")
-
-print("Stat normal test aws: {}".format(k2_greengrass_overall_delay))
 
 print("AWS Greengrass overall delay mean: {}".format(df_greengrass_stats['overall_delay'].mean()))
 print("AWS Greengrass overall delay std: {}".format(df_greengrass_stats['overall_delay'].std()))
@@ -47,7 +40,6 @@ print("AWS Greengrass network delay median: {}".format(df_greengrass_stats['netw
 print("AWS Greengrass processing delay mean: {}".format(df_greengrass_stats['processing_delay'].mean()))
 print("AWS Greengrass processing delay std: {}".format(df_greengrass_stats['processing_delay'].std()))
 print("AWS Greengrass processing delay median: {}".format(df_greengrass_stats['processing_delay'].median()))
-
 
 x = np.arange(0, 500, 1)
 df_lambda_stats = pd.read_csv('stats_lambda_1024mb.csv', delimiter=',')
@@ -67,44 +59,93 @@ print("AWS Greengrass overall delay kurtosis: {}".format(stats.kurtosis(df_green
 print("AWS Lambda overall delay skew: {}".format(stats.skew(df_lambda_stats['overall_delay'])))
 print("AWS Lambda overall delay kurtosis: {}".format(stats.kurtosis(df_lambda_stats['overall_delay'])))
 
-
 k2_lambda_overall_delay, p_aws_lambda_overall_delay = stats.normaltest(df_lambda_stats['overall_delay'])
-k2_greengrass_overall_delay, p_aws_greengrass_overall_delay = stats.normaltest(df_greengrass_stats['overall_delay'])
 
 if p_aws_lambda_overall_delay < alpha:
-    print("The null hypothesis can be rejected for AWS Lambda: not normal distribution")
+    print("The null hypothesis can be rejected for AWS Lambda overall delay: not normal distribution")
 else:
-    print("The null hypothesis can be accepted for AWS Lambda: not normal distribution")
+    print("The null hypothesis can be accepted for AWS Lambda overall delay: not normal distribution")
 print("AWS Lambda overall delay normaltest p_2: {}".format(p_aws_lambda_overall_delay))
-print("Stat normal test aws lambda: {}".format(k2_lambda_overall_delay))
+print("Stat normal test aws lambda overall delay: {}".format(k2_lambda_overall_delay))
 
+k2_greengrass_overall_delay, p_aws_greengrass_overall_delay = stats.normaltest(df_greengrass_stats['overall_delay'])
 if p_aws_greengrass_overall_delay < alpha:
-    print("The null hypothesis can be rejected for AWS Greengrass: not normal distribution")
+    print("The null hypothesis can be rejected for AWS Lambda overall delay: not normal distribution")
 else:
-    print("The null hypothesis can be accepted for aws: normal distribution")
-
-print("AWS Greengrass overall delay normaltest p_2: {}".format(p_aws_greengrass_overall_delay))
-print("Stat normal test aws greengrass: {}".format(k2_greengrass_overall_delay))
-
+    print("The null hypothesis can be accepted for AWS Lambda overall delay: normal distribution")
+print("AWS greengrass overall delay normaltest p_2: {}".format(p_aws_greengrass_overall_delay))
+print("Stat normal test aws greengrass overall delay: {}".format(k2_greengrass_overall_delay))
 
 k2_lambda_network_delay, p_lambda_network_delay = stats.normaltest(df_lambda_stats['network_delay'])
+
+if p_lambda_network_delay < alpha:
+    print("The null hypothesis can be rejected for AWS Lambda network delay: not normal distribution")
+else:
+    print("The null hypothesis can be accepted for AWS Lambda network delay: normal distribution")
+print("AWS Greengrass network delay normaltest p_2: {}".format(p_lambda_network_delay))
+print("Stat normal test aws greengrass network delay: {}".format(k2_lambda_network_delay))
+
 k2_greengrass_network_delay, p_greengrass_network_delay = stats.normaltest(df_greengrass_stats['network_delay'])
 
+if p_greengrass_network_delay < alpha:
+    print("The null hypothesis can be rejected for AWS Greengrass network delay: not normal distribution")
+else:
+    print("The null hypothesis can be accepted for AWS Greengrass network delay: normal distribution")
+print("AWS Greengrass network delay normaltest p_2: {}".format(p_greengrass_network_delay))
+print("Stat normal test aws greengrass network delay: {}".format(k2_greengrass_network_delay))
 
-greengrass_vs_lambda_overall_delay = pd.DataFrame({
-    'overall_delay': np.concatenate((df_greengrass_stats['overall_delay'].values, df_lambda_stats['overall_delay'].values)),
-    'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
-})
+k2_lambda_processing_delay, p_lambda_processing_delay = stats.normaltest(df_lambda_stats['processing_delay'])
+if p_lambda_processing_delay < alpha:
+    print("The null hypothesis can be rejected for AWS Lambda processing delay: not normal distribution")
+else:
+    print("The null hypothesis can be accepted for AWS Lambda processing delay: normal distribution")
+print("AWS Greengrass processing delay normaltest p_2: {}".format(p_lambda_processing_delay))
+print("Stat normal test AWS Greengrass processing delay: {}".format(k2_lambda_processing_delay))
 
-greengrass_vs_lambda_processing_delay = pd.DataFrame({
-    'processing_delay': np.concatenate((df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values)),
-    'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
-})
+k2_greengrass_processing_delay, p_greengrass_processing_delay = stats.normaltest(
+    df_greengrass_stats['processing_delay'])
+if p_greengrass_processing_delay < alpha:
+    print("The null hypothesis can be rejected for AWS Greengrass processing delay: not normal distribution")
+else:
+    print("The null hypothesis can be accepted for AWS Greengrass processing delay: normal distribution")
+print("AWS Greengrass processing delay normaltest p_2: {}".format(p_greengrass_processing_delay))
+print("Stat normal test aws greengrass processing delay: {}".format(k2_greengrass_processing_delay))
 
-greengrass_vs_lambda_network_delay = pd.DataFrame({
-    'network_delay': np.concatenate((df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values)),
-    'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
-})
+# greengrass_vs_lambda_overall_delay = pd.DataFrame({
+#     'overall_delay': np.concatenate(
+#         (df_greengrass_stats['overall_delay'].values, df_lambda_stats['overall_delay'].values)),
+#     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
+# })
+#
+# greengrass_vs_lambda_processing_delay = pd.DataFrame({
+#     'processing_delay': np.concatenate(
+#         (df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values)),
+#     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
+# })
+#
+# greengrass_vs_lambda_network_delay = pd.DataFrame({
+#     'network_delay': np.concatenate(
+#         (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values)),
+#     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
+# })
+
+sub_id = np.repeat(np.arange(0, 1000, 1), 2)
+rt = np.concatenate(
+    (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values, df_greengrass_stats['processing_delay'], df_lambda_stats['processing_delay']))
+iv1 = np.concatenate((np.repeat('network_delay', 1000), np.repeat('processing_delay', 1000)))
+iv2 = np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500), np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500)))
+
+
+
+# greengrass_vs_lambda = pd.DataFrame({
+#     'overall_delay': np.concatenate(
+#         (df_greengrass_stats['overall_delay'].values, df_lambda_stats['overall_delay'].values)),
+#     'network_delay': np.concatenate(
+#         (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values)
+#     ),
+#     'processing_delay': np.concatenate((df_greengrass_stats['processing_delay'], df_lambda_stats['processing_delay'])),
+#     'platform': np.concatenate((['aws_greengrass'] * 500, ['aws_lambda'] * 500))
+# })
 
 plt.figure(2)
 fig, ax = plt.subplots(ncols=3, figsize=(30, 10))
