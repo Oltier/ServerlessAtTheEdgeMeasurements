@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
-
+from statsmodels.stats.anova import AnovaRM
+from statsmodels.formula.api import ols
 import pyvttbl as pt
 from collections import namedtuple
 
@@ -129,22 +130,38 @@ print("Stat normal test aws greengrass processing delay: {}".format(k2_greengras
 #     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
 # })
 
-sub_id = np.concatenate((np.arange(0, 1000, 1), np.arange(0, 1000, 1)))
+sub_id = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1)))
 rt = np.concatenate(
     (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values, df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
 iv1 = np.concatenate((np.repeat('network_delay', 1000), np.repeat('processing_delay', 1000)))
 iv2 = np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500), np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500)))
 
-Sub = namedtuple('Sub', ['sub_id', 'rt', 'iv1', 'iv2'])
-df_pt = pt.DataFrame()
+# ********* pyvttbl version ************
+# Sub = namedtuple('Sub', ['sub_id', 'rt', 'iv1', 'iv2'])
+# df_pt = pt.DataFrame()
+#
+# for idx in range(len(sub_id)):
+#     df_pt.insert(Sub(sub_id[idx], rt[idx], iv1[idx], iv2[idx])._asdict())
+#
+# print(type(df_pt['sub_id'][0]))
+# aov = df_pt.anova('rt', sub='sub_id', wfactors=['iv1', 'iv2'])
+#
+# print(aov)
 
-for idx in range(len(sub_id)):
-    df_pt.insert(Sub(sub_id[idx], rt[idx], iv1[idx], iv2[idx])._asdict())
 
-print(type(df_pt['sub_id'][0]))
-aov = df_pt.anova('rt', sub='sub_id', wfactors=['iv1', 'iv2'])
+# ********* statsmodel version ************
 
-print(aov)
+df_pd = pd.DataFrame({
+    'sub_id': sub_id,
+    'rt': rt,
+    'iv1': iv1,
+    'iv2': iv2
+})
+
+aovrm2way = AnovaRM(df_pd, 'rt', 'sub_id', within=['iv1', 'iv2'])
+res2way = aovrm2way.fit()
+
+print(res2way.summary())
 
 # greengrass_vs_lambda = pd.DataFrame({
 #     'overall_delay': np.concatenate(
