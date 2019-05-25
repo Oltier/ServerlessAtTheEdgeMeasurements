@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 from scipy import stats
 from statsmodels.stats.anova import anova_lm
 from statsmodels.stats.anova import AnovaRM
@@ -57,10 +58,14 @@ print("AWS Lambda processing delay mean: {}".format(df_lambda_stats['processing_
 print("AWS Lambda processing delay std: {}".format(df_lambda_stats['processing_delay'].std()))
 print("AWS Lambda processing delay median: {}".format(df_lambda_stats['processing_delay'].median()))
 
-print("AWS Greengrass overall delay skew: {}".format(stats.skew(df_greengrass_stats['overall_delay'])))
-print("AWS Greengrass overall delay kurtosis: {}".format(stats.kurtosis(df_greengrass_stats['overall_delay'])))
-print("AWS Lambda overall delay skew: {}".format(stats.skew(df_lambda_stats['overall_delay'])))
-print("AWS Lambda overall delay kurtosis: {}".format(stats.kurtosis(df_lambda_stats['overall_delay'])))
+print("AWS Greengrass processing delay skew: {}".format(stats.skew(df_greengrass_stats['processing_delay'])))
+print("AWS Greengrass processing delay kurtosis: {}".format(stats.kurtosis(df_greengrass_stats['processing_delay'])))
+print("AWS Greengrass network delay skew: {}".format(stats.skew(df_greengrass_stats['network_delay'])))
+print("AWS Greengrass network delay kurtosis: {}".format(stats.kurtosis(df_greengrass_stats['network_delay'])))
+print("AWS lambda processing delay skew: {}".format(stats.skew(df_lambda_stats['processing_delay'])))
+print("AWS lambda processing delay kurtosis: {}".format(stats.kurtosis(df_lambda_stats['processing_delay'])))
+print("AWS lambda network delay skew: {}".format(stats.skew(df_lambda_stats['network_delay'])))
+print("AWS lambda network delay kurtosis: {}".format(stats.kurtosis(df_lambda_stats['network_delay'])))
 
 k2_lambda_overall_delay, p_aws_lambda_overall_delay = stats.normaltest(df_lambda_stats['overall_delay'])
 
@@ -142,39 +147,39 @@ print("Stat normal test aws greengrass processing delay: {}".format(k2_greengras
 #
 # df_spss.to_csv('df_spss.csv', header=True, index=None)
 #
-sub_id = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1)))
-rt = np.concatenate(
-    (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values, df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
-iv1 = np.concatenate((np.repeat('network_delay', 1000), np.repeat('processing_delay', 1000)))
-iv2 = np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500), np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500)))
+# sub_id = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1)))
+# rt = np.concatenate(
+#     (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values, df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
+# iv1 = np.concatenate((np.repeat('network_delay', 1000), np.repeat('processing_delay', 1000)))
+# iv2 = np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500), np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500)))
 
 # ********* pyvttbl version ************
-Sub = namedtuple('Sub', ['sub_id', 'rt', 'iv1', 'iv2'])
-df_pt = pt.DataFrame()
-
-for idx in range(len(sub_id)):
-    df_pt.insert(Sub(sub_id[idx], rt[idx], iv1[idx], iv2[idx])._asdict())
-
-print(type(df_pt['sub_id'][0]))
-aov = df_pt.anova('rt', sub='sub_id', wfactors=['iv1', 'iv2'])
-
-print(aov)
+# Sub = namedtuple('Sub', ['sub_id', 'rt', 'iv1', 'iv2'])
+# df_pt = pt.DataFrame()
+#
+# for idx in range(len(sub_id)):
+#     df_pt.insert(Sub(sub_id[idx], rt[idx], iv1[idx], iv2[idx])._asdict())
+#
+# print(type(df_pt['sub_id'][0]))
+# aov = df_pt.anova('rt', sub='sub_id', wfactors=['iv1', 'iv2'])
+#
+# print(aov)
 
 
 # ********* statsmodel version ************
 
-df_pd = pd.DataFrame({
-    'sub_id': sub_id,
-    'delay': rt,
-    'delay_type': iv1,
-    'platform': iv2
-})
+# df_pd = pd.DataFrame({
+#     'sub_id': sub_id,
+#     'delay': rt,
+#     'delay_type': iv1,
+#     'platform': iv2
+# })
+#
+#
+# aovrm2way = AnovaRM(df_pd, 'delay', 'sub_id', within=['delay_type', 'platform'])
+# res2way = aovrm2way.fit()
 
-
-aovrm2way = AnovaRM(df_pd, 'delay', 'sub_id', within=['delay_type', 'platform'])
-res2way = aovrm2way.fit()
-
-print(res2way)
+# print(res2way)
 
 
 # ************Statsmodel with ols ***********
@@ -251,3 +256,15 @@ plt.title('Processing delay')
 plt.legend()
 
 plt.show()
+
+
+# plt.figure(2)
+# fig, ax = plt.subplots(ncols=4, figsize=(40, 10))
+#
+# fig.tight_layout()
+#
+# subplot0 = plt.subplot(131)
+# num_bins = 499
+# plt.hist(df_greengrass_stats['processing_delay'], bins=50)
+#
+# plt.show()
