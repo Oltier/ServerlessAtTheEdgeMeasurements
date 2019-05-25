@@ -107,8 +107,8 @@ meanrank = n1*n2/2.0 + 0.5
 rankx_mean = np.mean(rankx)
 ranky_mean = np.mean(ranky)
 
-print("Mann-whitney rankx mean: {}".format(rankx_mean))
-print("Mann-whitney ranky mean: {}".format(ranky_mean))
+print("Mann-whitney Azure mean rank: {}".format(rankx_mean))
+print("Mann-whitney AWS Greengrass mean rank: {}".format(ranky_mean))
 
 
 stats_levene, p_levene = levene(df_azure_stats['overall_delay'], df_aws_stats['overall_delay'])
