@@ -137,33 +137,33 @@ print("Stat normal test aws greengrass processing delay: {}".format(k2_greengras
 #     'platform': np.concatenate((['AWS Greengrass'] * 500, ['Azure Lambda'] * 500))
 # })
 
-# x = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1)))
-# df_spss = pd.DataFrame({
-#     'id': x,
-#     'platform': np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500))),
-#     'network_delay': np.concatenate((df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values)),
-#     'processing_delay': np.concatenate((df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
-# })
-#
-# df_spss.to_csv('df_spss.csv', header=True, index=None)
-#
-# sub_id = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1)))
-# rt = np.concatenate(
-#     (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values, df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
-# iv1 = np.concatenate((np.repeat('network_delay', 1000), np.repeat('processing_delay', 1000)))
-# iv2 = np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500), np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500)))
+x = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1)))
+df_spss = pd.DataFrame({
+    'id': x,
+    'platform': np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500))),
+    'network_delay': np.concatenate((df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values)),
+    'processing_delay': np.concatenate((df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
+})
+
+df_spss.to_csv('df_spss.csv', header=True, index=None)
+
+sub_id = np.concatenate((np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1), np.arange(0, 500, 1)))
+rt = np.concatenate(
+    (df_greengrass_stats['network_delay'].values, df_lambda_stats['network_delay'].values, df_greengrass_stats['processing_delay'].values, df_lambda_stats['processing_delay'].values))
+iv1 = np.concatenate((np.repeat('network_delay', 1000), np.repeat('processing_delay', 1000)))
+iv2 = np.concatenate((np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500), np.repeat('aws_greengrass', 500), np.repeat('aws_lambda', 500)))
 
 # ********* pyvttbl version ************
-# Sub = namedtuple('Sub', ['sub_id', 'rt', 'iv1', 'iv2'])
-# df_pt = pt.DataFrame()
+Sub = namedtuple('Sub', ['sub_id', 'rt', 'iv1', 'iv2'])
+df_pt = pt.DataFrame()
+
+for idx in range(len(sub_id)):
+    df_pt.insert(Sub(sub_id[idx], rt[idx], iv1[idx], iv2[idx])._asdict())
+
+print(type(df_pt['sub_id'][0]))
+aov = df_pt.anova('rt', sub='sub_id', wfactors=['iv1', 'iv2'])
 #
-# for idx in range(len(sub_id)):
-#     df_pt.insert(Sub(sub_id[idx], rt[idx], iv1[idx], iv2[idx])._asdict())
-#
-# print(type(df_pt['sub_id'][0]))
-# aov = df_pt.anova('rt', sub='sub_id', wfactors=['iv1', 'iv2'])
-#
-# print(aov)
+print(aov)
 
 
 # ********* statsmodel version ************
@@ -174,8 +174,8 @@ print("Stat normal test aws greengrass processing delay: {}".format(k2_greengras
 #     'delay_type': iv1,
 #     'platform': iv2
 # })
-#
-#
+
+
 # aovrm2way = AnovaRM(df_pd, 'delay', 'sub_id', within=['delay_type', 'platform'])
 # res2way = aovrm2way.fit()
 
@@ -225,37 +225,37 @@ print("Stat normal test aws greengrass processing delay: {}".format(k2_greengras
 #     'platform': np.concatenate((['aws_greengrass'] * 500, ['aws_lambda'] * 500))
 # })
 
-plt.figure(2)
-fig, ax = plt.subplots(ncols=3, figsize=(30, 10))
-
-fig.tight_layout()
-subplot0 = plt.subplot(131)
-subplot0.set_ylim(0.0, 1.5)
-subplot0.set_yticks(np.arange(0.0, 1.5, 0.1))
-fig.tight_layout()
-
-plt.plot(x, df_lambda_stats['overall_delay'], 'r', label='AWS Lambda')
-plt.plot(x, df_greengrass_stats['overall_delay'], 'b', label="AWS Greengrass")
-plt.title('Overall delay')
-plt.legend()
-
-subplot1 = plt.subplot(132)
-subplot1.set_ylim(0.0, 1.5)
-subplot1.set_yticks(np.arange(0.0, 1.5, 0.1))
-plt.plot(x, df_lambda_stats['network_delay'], 'r', label='AWS Lambda')
-plt.plot(x, df_greengrass_stats['network_delay'], 'b', label="AWS Greengrass")
-plt.title('Network delay')
-plt.legend()
-
-subplot2 = plt.subplot(133)
-subplot2.set_ylim(0.0, 1.5)
-subplot2.set_yticks(np.arange(0.0, 1.5, 0.1))
-plt.plot(x, df_lambda_stats['processing_delay'], 'r', label='AWS Lambda')
-plt.plot(x, df_greengrass_stats['processing_delay'], 'b', label="AWS Greengrass")
-plt.title('Processing delay')
-plt.legend()
-
-plt.show()
+# plt.figure(2)
+# fig, ax = plt.subplots(ncols=3, figsize=(30, 10))
+#
+# fig.tight_layout()
+# subplot0 = plt.subplot(131)
+# subplot0.set_ylim(0.0, 1.5)
+# subplot0.set_yticks(np.arange(0.0, 1.5, 0.1))
+# fig.tight_layout()
+#
+# plt.plot(x, df_lambda_stats['overall_delay'], 'r', label='AWS Lambda')
+# plt.plot(x, df_greengrass_stats['overall_delay'], 'b', label="AWS Greengrass")
+# plt.title('Overall delay')
+# plt.legend()
+#
+# subplot1 = plt.subplot(132)
+# subplot1.set_ylim(0.0, 1.5)
+# subplot1.set_yticks(np.arange(0.0, 1.5, 0.1))
+# plt.plot(x, df_lambda_stats['network_delay'], 'r', label='AWS Lambda')
+# plt.plot(x, df_greengrass_stats['network_delay'], 'b', label="AWS Greengrass")
+# plt.title('Network delay')
+# plt.legend()
+#
+# subplot2 = plt.subplot(133)
+# subplot2.set_ylim(0.0, 1.5)
+# subplot2.set_yticks(np.arange(0.0, 1.5, 0.1))
+# plt.plot(x, df_lambda_stats['processing_delay'], 'r', label='AWS Lambda')
+# plt.plot(x, df_greengrass_stats['processing_delay'], 'b', label="AWS Greengrass")
+# plt.title('Processing delay')
+# plt.legend()
+#
+# plt.show()
 
 
 # plt.figure(2)
